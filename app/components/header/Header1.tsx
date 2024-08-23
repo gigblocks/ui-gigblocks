@@ -27,7 +27,7 @@ export default function Header1() {
             <Link className="ud-btn btn-thm add-joining" href="/register">
               Join
             </Link>
-            <WalletButton />
+            <WalletButton registerSession={false} />
           </div>
         </nav>
       </header>
