@@ -1,10 +1,9 @@
-import Image from "next/image";
-import WalletConnect from "./components/WalletConnect";
+import Header1 from "./components/header/Header1";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24 bg-gray">
-      <WalletConnect />
-    </main>
+    <>
+      <Header1 />
+    </>
   );
 }
