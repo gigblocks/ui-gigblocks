@@ -8,14 +8,14 @@ export default function WalletButton({ registerSession }: Readonly<{ registerSes
   const account = useAccount({
       config,
   })
-  console.log(registerSession, account, 'woi')
+
   if (registerSession && account.isConnected) {
     return (
       <div className="dropdown">
         <a className="dropdown-button">
           {account.address}
         </a>
-        <div className="dropdown-content">
+        <div className="dropdown-content cursor-pointer" style={{ width: 400 /* need to set width manually*/ }}>
             <a onClick={() => disconnect()}>
               <span className="title">Disconnect</span>
             </a>
