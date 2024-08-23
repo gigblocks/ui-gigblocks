@@ -45,6 +45,6 @@ export const config = defaultWagmiConfig({
   }),
 })
 
-export const BASE_URL = 'https://services-gigblocks-production.up.railway.app'
+export const BASE_URL = 'https://services.gigblocks.net'
 export const WALLET_ADDRESS = '0x3EE23782609a89797962547d0C00ce7783438597';
 export const GigBlocksAbi = ABI
