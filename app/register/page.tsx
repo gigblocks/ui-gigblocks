@@ -10,6 +10,7 @@ import axios from 'axios'
 import { config, GigBlocksAbi, WALLET_ADDRESS, BASE_URL } from "../config";
 import { JobCategory } from "../data/jobCategory";
 import DatePickerComponent from "../components/DatePicker";
+import moment from "moment";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -326,10 +327,10 @@ const FormComponent = ({ handleSubmit, type = 'education' }: Readonly<any>) => {
         <label className="form-label">Start date - End date</label>
         <div className="flex justify-between">
           <div className="w-full mr-2">
-            <DatePickerComponent onChange={(val: any) => setEduForm({...eduForm, startDate: val.year() })} />
+            <DatePickerComponent isYearOnly onChange={(val: any) => setEduForm({...eduForm, startDate: moment(val).year() })} />
           </div>
           <div className="w-full ml-2">
-            <DatePickerComponent onChange={(val: any) => setEduForm({...eduForm, endDate: val.year() })} />
+            <DatePickerComponent isYearOnly onChange={(val: any) => setEduForm({...eduForm, endDate: moment(val).year() })} />
           </div>
         </div>
       </div>
