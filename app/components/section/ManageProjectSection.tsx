@@ -209,7 +209,7 @@ export default function ManageProjectSection() {
       "Approved Projects"
     ];
   } else {
-    let tabs = [
+    tabs = [
       "Open Projects",
       "Ongoing Projects",
       "Completed Projects",
