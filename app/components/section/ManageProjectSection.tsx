@@ -200,13 +200,22 @@ export default function ManageProjectSection() {
   const { data: projectData, refetch, isFetching } = useManageProjects(isClient, account.address, 10, status, currentPage)
   console.log(error)
   const [activeTab, setActiveTab] = useState(isClient ? "Open Projects" : "Ongoing Projects");
+  console.log()
+  
   if (!isClient) {
     tabs = [
       "Ongoing Projects",
       "Completed Projects",
       "Approved Projects"
     ];
-  } 
+  } else {
+    let tabs = [
+      "Open Projects",
+      "Ongoing Projects",
+      "Completed Projects",
+      "Approved Projects"
+    ];
+  }
   useEffect(() => {
     refetch()
   }, [status])
