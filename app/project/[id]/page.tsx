@@ -68,6 +68,7 @@ export default function ProjectDetail() {
     bidTime: 0,
     coverLetter: ''
   })
+  const [isSubmiting, setSubmiting] = useState(false);
   const { writeContract, data: writeData, isSuccess } = useWriteContract()
   
   useEffect(() => {
@@ -78,14 +79,17 @@ export default function ProjectDetail() {
       
     }
     if (writeData) {      
+      setSubmiting(true)
       toast.loading('applying for project...')  
       notify().then(() => {
         toast.dismiss()
         toast.success('Apply job successfully')
+        setSubmiting(false)
       }).catch(err => {
         console.log(err)
         toast.dismiss();
         toast.error("Failed to apply project");
+        setSubmiting(false)
       })
     }
   }, [writeData])
@@ -120,7 +124,7 @@ export default function ProjectDetail() {
     }
     return false;
   }
-  console.log(data, 'woi')
+
   return (
     <>
       <Header1 />
@@ -247,13 +251,13 @@ export default function ProjectDetail() {
               placeholder="Describe why you're the best fit for this project..."
             />
             <Button 
-              onClick={triggerFunction} 
+              onClick={triggerFunction}
               variant="contained" 
               color="success" 
               fullWidth
               size="large"
               className="mt-4 py-3 text-lg font-semibold transition-all duration-300 hover:bg-green-700"
-              disabled={errorPriceRange()}
+              disabled={errorPriceRange() || isSubmiting}
             >
               Submit Proposal
             </Button>

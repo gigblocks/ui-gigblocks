@@ -11,6 +11,7 @@ import { waitForTransactionReceipt } from "@wagmi/core";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Address } from "viem";
+import { skills } from "@/app/data/skills";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -78,6 +79,7 @@ export default function CreateProject() {
 
   const triggerCreateJob = async () => {
     try {
+      setIsLoading(true)
       toast.loading("Finishing your mutation...");
       let responseProfile = await axios.get(BASE_URL + '/profiles/' + account.address)
       const profileData = responseProfile.data;
@@ -139,10 +141,12 @@ export default function CreateProject() {
       setTimeout(() => {
         router.push('/manage-projects')
       }, 4000)
+      setIsLoading(false)
     } catch (err) {
       console.log(err)
       toast.dismiss();
       toast.error("Failed to create job");
+      setIsLoading(false)
     }
 
   }
@@ -231,7 +235,7 @@ export default function CreateProject() {
             className="mt-2"
             multiple
             id="tags-standard"
-            options={dummyTag}
+            options={skills}
             onChange={(e, value) => setForm({...form, skillsRequired: value })}
             getOptionLabel={(option:string) => option}
             renderInput={(params) => (
@@ -277,6 +281,7 @@ export default function CreateProject() {
           ) : (
             <div className="mt-4">
               <Button
+                className="bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
                 component="label"
                 role={undefined}
                 variant="contained"
@@ -301,6 +306,7 @@ export default function CreateProject() {
           ) : (
             <div className="mt-4">
               <Button
+                className="bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
                 component="label"
                 role={undefined}
                 variant="contained"
@@ -313,8 +319,13 @@ export default function CreateProject() {
             </div>
           )}
       </div>
-      <Button onClick={() => triggerCreateJob()} variant="contained" className="mt-4 py-4 px-12">
-        {isLoading ? <CircularProgress className="w-[20px] h-[20px]" sx={{ color: 'white' }} /> : 'Submit'}
+      <Button
+        disabled={isLoading}
+        onClick={() => triggerCreateJob()}
+        variant="contained"
+        className="mt-4 py-4 px-12 bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
+      >
+        Submit
       </Button>
     </section>
   )
