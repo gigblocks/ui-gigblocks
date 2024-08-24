@@ -41,7 +41,7 @@ export default function WalletButton({ registerSession }: Readonly<{ registerSes
             {result.data ? (<Link href={"/my-profile"}>
               <span className="title">Profile</span>
             </Link>) : null}
-            <a onClick={() => disconnect()}>
+            <a className='cursor-pointer' onClick={() => disconnect()}>
                 <span className="title">Disconnect</span>
             </a>
         </div>
