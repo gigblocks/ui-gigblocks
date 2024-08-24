@@ -86,7 +86,7 @@ export default function ProjectCard({ data, id }: ProjectCardProps) {
           <p className="text-sm text-gray-500 mb-6">Price Range</p>
           <Link href={`/project/${id}`} className="w-full">
             <button className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-500 hover:to-blue-600 transition duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1">
-              Send Proposal
+              View More
             </button>
           </Link>
         </div>

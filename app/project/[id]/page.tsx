@@ -12,6 +12,18 @@ import { Button, TextField, OutlinedInput, InputAdornment } from '@mui/material'
 import moment from 'moment'
 import { MapPin, Calendar, Eye, MessageSquare, DollarSign, Clock, ThumbsUp, Languages, BarChart } from 'lucide-react'
 import Header1 from '@/app/components/header/Header1'
+import { parseGwei } from 'viem';
+
+function useGetETH() {
+  return useQuery({
+    queryKey: ['getETH'],
+    queryFn: async () => {
+      const response = await axios.get(`https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD`)
+      return response.data
+    },
+    staleTime: Infinity
+  })
+}
 
 // Dummy data for the project
 const dummyProjectData = {
@@ -53,11 +65,15 @@ export default function ProjectDetail() {
     bidTime: 0,
     coverLetter: ''
   })
-  const { writeContract } = useWriteContract()
-
+  const { data: ethData } = useGetETH()
+  const { writeContract, error } = useWriteContract()
+  console.log(error, 'woi')
   const triggerFunction = async () => {
     const profileDetail = dummyProfileData.profileDetail
-    const args = [1, dummyProfileData.username, profileDetail.email, Number(form.bidAmmount), form.bidTime, form.coverLetter]
+    const ethPrice = ethData?.USD ?  (Number(form.bidAmmount) / ethData.USD).toFixed(6) : 0;
+    const wei = parseGwei(`${ethPrice}`);
+    console.log(wei, ethPrice, 'price')
+    const args = [Number(params.id), dummyProfileData.username, profileDetail.email, wei, form.bidTime, form.coverLetter]
     
     writeContract({
       abi: GigBlocksAbi,
