@@ -98,7 +98,7 @@ const IconPlaceholder: React.FC<{ color: string }> = ({ color }) => (
 const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, projectId: number }) => {
   const { data: ethData } = useGetETH()
   const [open, setOpen] = useState(false)
-  const [isShow, setShow] = useState<string>('')
+  const [choosedApplicant, setChoosedApplicant] = useState<any>({})
   const [form, setForm] = useState({
     payableAmmount: '',
     deadline: 0
@@ -125,14 +125,14 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
       abi: GigBlocksAbi,
       address: GIGBLOCKS_ADDRESS,
       functionName: 'assignFreelancer',
-      args: [projectId, isShow, applicants?.bidAmount, applicants?.bidTime],
-      value: eth,
+      args: [projectId, choosedApplicant?.freelancerWalletAddress, choosedApplicant?.bidAmount, Number(choosedApplicant?.bidTime)],
+      value: parseEther((BigInt(choosedApplicant?.bidAmount || 0) / BigInt(1000000000)).toString()),
     })
     setOpen(false)
   }
 
-  
-  console.log(data, 'anjay')
+  console.log(choosedApplicant)
+  console.log((BigInt(choosedApplicant?.bidAmount) / BigInt(1000000000)), 'anjay')
   return (
     <>
       <Button variant="outline" size="sm" className="mr-2" onClick={() => setOpen(true)}>
@@ -151,7 +151,7 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
                 </div>
                 <div className="flex space-x-2">
                   <Tooltip title="assign freelancer">
-                    <Button onClick={() => setShow(applicant.freelancerWalletAddress)} size="sm" variant="outline">
+                    <Button onClick={() => setChoosedApplicant(applicant)} size="sm" variant="outline">
                       <UserCheck className="h-4 w-4" />
                     </Button>
                   </Tooltip>
@@ -160,14 +160,15 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
                   </Button>
                 </div>
               </div>
-              {isShow === applicant.freelancerWalletAddress && (
+              {choosedApplicant?.freelancerWalletAddress === applicant.freelancerWalletAddress && (
                 <>
                   <div className='border-b border-gray-500 pb-4 items-center'>
                     <div>
-                      {/* {} */}
-                      <div>Bid Amount: {((BigInt(applicant.bidAmount) *BigInt(Math.round(ethData.USD)) / BigInt(1000000000000000000))).toString()}</div>
-                      <div>Cover Letter:</div>
-                      <div>{applicant.coverLetter}</div>
+                      <div>Bid Amount: {((BigInt(applicant.bidAmount) *BigInt(Math.round(ethData.USD)) / BigInt(1000000000))).toString()}$</div>
+                      <div className='flex'>
+                        <div className='mr-2'>Cover Letter:</div>
+                        <div>{applicant.coverLetter}</div>
+                      </div>
                     </div>
                     <div className='flex justify-end w-full mt-4'>
                       <Button onClick={() => triggerAssignFreelancer()} className='px-10'>Assign</Button>
