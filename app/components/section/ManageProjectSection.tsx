@@ -199,7 +199,7 @@ export default function ManageProjectSection() {
 
   const {data: isClient} = useReadContract({ abi: GigBlocksAbi, address: GIGBLOCKS_ADDRESS, functionName: 'isClient', args: [account.address] })
   const [status, setStatus] = useState(isClient ? 0 : 1);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const { data: projectData, refetch, isFetching } = useManageProjects(isClient, account.address, 10, status, currentPage)
   console.log(error)
   const [activeTab, setActiveTab] = useState(isClient ? "Open Projects" : "Ongoing Projects");
