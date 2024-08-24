@@ -67,3 +67,47 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Container for dropdown */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* dropdown toggle */
+.dropdown-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+/* content dropdown that hiding */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+/* content dropdown */
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+/* show dropdown when hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* hover content */
+.dropdown-content a:hover {
+  background-color: #f1f1f1;
+}
