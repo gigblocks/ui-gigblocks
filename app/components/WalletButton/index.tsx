@@ -1,12 +1,20 @@
-import { useAccount, useDisconnect } from 'wagmi'
+import { useAccount, useDisconnect, useReadContract } from 'wagmi'
 import Link from 'next/link';
-import { config } from '@/app/config'
+import { config, GigBlocksAbi, WALLET_ADDRESS } from '@/app/config'
 
 
 export default function WalletButton({ registerSession }: Readonly<{ registerSession: boolean }>) {
+
   const { disconnect } = useDisconnect();
   const account = useAccount({
-      config,
+    config,
+  })
+
+  const result = useReadContract({
+    abi: GigBlocksAbi,
+    address: WALLET_ADDRESS,
+    functionName: 'isRegistered',
+    args: [account.address]
   })
 
   if (registerSession && account.isConnected) {
@@ -30,9 +38,9 @@ export default function WalletButton({ registerSession }: Readonly<{ registerSes
           <span className="title">{account.address && account.address.slice(0,10)}...</span>{" "}
         </a>
         <div className="dropdown-content">
-            <Link href={"/my-profile"}>
+            {result.data ? (<Link href={"/my-profile"}>
               <span className="title">Profile</span>
-            </Link>
+            </Link>) : null}
             <a onClick={() => disconnect()}>
                 <span className="title">Disconnect</span>
             </a>
