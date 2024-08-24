@@ -47,7 +47,7 @@ export default function WalletButton({ registerSession }: Readonly<{ registerSes
         <div className="dropdown-content origin-top-right absolute right-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none">
           <div className="py-1">
             {result.data === true && (
-              <Link href="/my-profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+              <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
                 Profile
               </Link>
             )}
