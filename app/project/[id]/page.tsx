@@ -54,6 +54,16 @@ export default function ProjectDetail() {
     coverLetter: ''
   })
   const { writeContract } = useWriteContract()
+  
+  const {data, isLoading} = useQuery({
+    queryKey: ['jobsdetail'],
+    queryFn: async () => {
+      const response = await axios.get(`${BASE_URL}/jobs/${params.id}`)
+      return response.data
+    },
+  })
+
+  console.log(data, "DATA FROM JOB DETAIl")
 
   const triggerFunction = async () => {
     const profileDetail = dummyProfileData.profileDetail
@@ -72,24 +82,22 @@ export default function ProjectDetail() {
     <>
       <Header1 />
       <main className="container mx-auto px-4 pt-[120px] bg-gray-50">
-        <div className="flex flex-col md:flex-row gap-8">
+        {
+          data && <div className="flex flex-col md:flex-row gap-8">
           <div className="md:w-2/3">
             <div className="bg-white rounded-lg p-8 mb-8 shadow-lg">
-              <h1 className="text-3xl font-bold mb-4 text-gray-800">{dummyProjectData.title}</h1>
+              <h1 className="text-3xl font-bold mb-4 text-gray-800">{data.jobDetails.title}</h1>
               <div className="flex flex-wrap items-center text-sm text-gray-600 space-x-6">
-                <span className="flex items-center"><MapPin size={18} className="mr-2 text-green-500" /> {dummyProjectData.location}</span>
-                <span className="flex items-center"><Calendar size={18} className="mr-2 text-blue-500" /> {dummyProjectData.date}</span>
-                <span className="flex items-center"><Eye size={18} className="mr-2 text-purple-500" /> {dummyProjectData.views} Views</span>
+                <span className="flex items-center"><MapPin size={18} className="mr-2 text-green-500" /> {data.jobDetails.clientLocation}</span>
+                <span className="flex items-center"><Calendar size={18} className="mr-2 text-blue-500" /> {new Date(data.jobDetails.createdAt).toLocaleDateString()}</span>
+                <span className="flex items-center"><Eye size={18} className="mr-2 text-purple-500" /> {data.applicantCount} Applicants</span>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
               {[
                 { icon: MessageSquare, title: "Seller Type", value: dummyProjectData.sellerType, color: "text-indigo-500" },
                 { icon: DollarSign, title: "Project Type", value: dummyProjectData.projectType, color: "text-green-500" },
-                { icon: Clock, title: "Project Duration", value: dummyProjectData.projectDuration, color: "text-blue-500" },
-                { icon: ThumbsUp, title: "Project Level", value: dummyProjectData.projectLevel, color: "text-yellow-500" },
-                { icon: Languages, title: "Languages", value: dummyProjectData.languages, color: "text-red-500" },
-                { icon: BarChart, title: "English Level", value: dummyProjectData.englishLevel, color: "text-purple-500" }
+                { icon: Clock, title: "Project Duration", value: `${data.jobDetails.estimateDuration} days`, color: "text-blue-500" },
               ].map((item, index) => (
                 <div key={index} className="bg-white rounded-lg p-6 shadow-md transition-all duration-300 hover:shadow-lg">
                   <item.icon size={24} className={`mb-3 ${item.color}`} />
@@ -101,13 +109,13 @@ export default function ProjectDetail() {
 
             <div className="bg-white rounded-lg p-8 mb-8 shadow-lg">
               <h2 className="text-2xl font-semibold mb-4 text-gray-800">Description</h2>
-              <p className="text-gray-700 leading-relaxed">{dummyProjectData.description}</p>
+              <p className="text-gray-700 leading-relaxed">{data.jobDetails.description}</p>
             </div>
 
             <div className="bg-white rounded-lg p-8 mb-8 shadow-lg">
               <h2 className="text-2xl font-semibold mb-4 text-gray-800">Skills Required</h2>
               <div className="flex flex-wrap gap-2">
-                {['Solidity', 'JavaScript', 'Smart Contracts', 'DeFi', 'Ethereum', 'Web3.js', 'React'].map((skill, index) => (
+                {data.jobDetails.skillsRequired.map((skill : string, index :number) => (
                   <span key={index} className="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
                     {skill}
                   </span>
@@ -157,6 +165,7 @@ export default function ProjectDetail() {
             </div>
           </div>
         </div>
+        }
       </main>
 
       <BasicModal isOpen={open} handleClose={() => setOpen(false)} width={500}>
