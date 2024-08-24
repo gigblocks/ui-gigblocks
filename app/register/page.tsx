@@ -15,6 +15,8 @@ import DatePickerComponent from "../components/DatePicker";
 import moment from "moment";
 import { toast } from "react-toastify";
 import { Address } from 'viem';
+import { countryList } from "../data/country";
+import { skills } from "../data/skills";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -52,7 +54,7 @@ export default function Register() {
     schoolName: '',
     description: ''
   })
-  
+  const [isLoading, setLoading] = useState<boolean>(false);
   const [openEducationForm, setOpenEducationForm] = useState<boolean>(true)
   const [openWorkForm, setOpenWorkForm] = useState<boolean>(true)
 
@@ -76,6 +78,7 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
+      setLoading(true)
       toast.loading("Finishing your mutation...");
       const formData = new FormData()
       formData.append('file', imgFile)
@@ -121,17 +124,18 @@ export default function Register() {
       })
       toast.success("Register successfully")
       setTimeout(() => {
-        router.push('/my-profile')
+        router.push('/myprofile')
       }, 1000)
+      setLoading(false)
     } catch (err) {
       console.log(err)
       toast.dismiss();
       toast.error("Failed to register account");
+      setLoading(false)
     }
   }
 
   const handleSubmit = (type: string, data: any) => {
-    console.log(type, 'woi')
     if (type === 'education') {
       setForm({ ...form, education: [...form.education, data ]})
       setOpenEducationForm(false)
@@ -245,7 +249,7 @@ export default function Register() {
             disablePortal
             className="mb-4"
             id="combo-box-demo"
-            options={['Indonesia', 'United States']}
+            options={countryList}
             fullWidth
             value={form.country}
             onChange={(e, value) => setForm({ ...form, country: value })}
@@ -266,7 +270,7 @@ export default function Register() {
           {flag == 1 && <Autocomplete
             multiple
             id="skills"
-            options={['CSS', 'HTML', 'JavaScript', 'Web3', 'Backend', 'Frontend']}
+            options={skills}
             onChange={(e, value) => setForm({...form, skills: value })}
             getOptionLabel={(option) => option}
             className="mb-4"
@@ -354,7 +358,7 @@ export default function Register() {
           <Button
             className="w-full bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
             type="button"
-            disabled={validate()}
+            disabled={validate() || isLoading}
             onClick={handleRegister}
             variant="contained"
           >
@@ -375,12 +379,6 @@ const FormComponent = ({ handleSubmit, type = 'education', handleClose, data }: 
     schoolName: '',
     description: ''
   })
-
-  // useEffect(() => {
-  //   if (data.startDate) {
-  //     setEduForm(data)
-  //   }
-  // }, [data])
 
   const validation = () => {
     const { startDate, endDate, degreeName, schoolName, description } = eduForm;
