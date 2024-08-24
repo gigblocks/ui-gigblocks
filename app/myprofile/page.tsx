@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import queryString from "query-string";
 import { useSearchParams, useRouter } from "next/navigation";
+import abi from "@/app/json/abi.json";
 import {
   Star,
   MapPin,
@@ -55,7 +56,7 @@ export default function Page() {
   const [countdown, setCountdown] = useState(0);
   const [isClaimingENS, setIsClaimingENS] = useState(false);
   const [isEnsVerified, setIsEnsVerified] = useState(false);
-  // const [showENSModal, setShowENSModal] = useState(false);
+  const [showENSModal, setShowENSModal] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -86,7 +87,7 @@ export default function Page() {
   const { data: profileData } = useProfile(address as string);
   const { data: reputationData } = useReputation(address as string);
 
-  const { writeContract, error } = useWriteContract();
+  const { writeContract, error, isPending } = useWriteContract();
 
   const connectedPlatforms = {
     github: !!(reputationData?.socialMediaFlags & 1),
@@ -217,20 +218,20 @@ export default function Page() {
     }
   };
 
-  // const handleClaimENS = async () => {
-  //   try {
-  //     await writeContract({
-  //       address: GIGBLOCKS_ADDRESS,
-  //       abi: GigBlocksAbi,
-  //       functionName: 'claimENS',
-  //       account: address,
-  //     });
-  //     // Handle success (e.g., show a success message, update UI)
-  //   } catch (err) {
-  //     console.error("Error claiming ENS:", err);
-  //     // Handle error (e.g., show error message to user)
-  //   }
-  // };
+  const handleClaimENS = async () => {
+    try {
+       writeContract({
+        address: '0x55895A982adb74FeFa8BDfB1Dca28713D568DF28',
+        abi: abi,
+        functionName: 'claimENS',
+        account: address as `0x${string}`,
+      });
+      // Handle success (e.g., show a success message, update UI)
+    } catch (err) {
+      console.error("Error claiming ENS:", err);
+      // Handle error (e.g., show error message to user)
+    }
+  };
 
   const profileDetail = profileData?.profileDetail || {};
   const registrationDate = profileData?.registrationDate
@@ -299,20 +300,22 @@ export default function Page() {
                 <h2 className="text-2xl font-bold text-gray-800">
                   {profileDetail.username}
                 </h2>
-                <a
-                  href={`https://ens.app/${profileDetail.username}.gigblocks.eth`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-1 text-lg text-indigo-600 hover:text-indigo-800 transition-colors duration-300"
-                >
-                  <span className="flex items-center">
-                    <img src="/ens.png" alt="ENS" className="w-5 h-5 mr-2" />
-                    {profileDetail.username}.gigblocks.eth
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </span>
-                </a>
+                {isEnsVerified && (
+                  <a
+                    href={`https://ens.app/${profileDetail.username}.gigblocks.eth`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-1 text-lg text-indigo-600 hover:text-indigo-800 transition-colors duration-300"
+                  >
+                    <span className="flex items-center">
+                      <img src="/ens.png" alt="ENS" className="w-5 h-5 mr-2" />
+                      {profileDetail.username}.gigblocks.eth
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </span>
+                  </a>
+                )}
                 <p className="text-lg text-gray-600">
                   {profileDetail.preference}
                 </p>
