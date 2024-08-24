@@ -44,7 +44,7 @@ export default function ProjectCard({ data, id }: ProjectCardProps) {
         <div className="flex items-start space-x-6 flex-grow">
           <div className="relative">
             <Image
-              src={`${process.env.NEXT_PUBLIC_PINATA_GATEWAY}/ipfs/${jobPictureIPFS}` || '/default-avatar.png'}
+              src={`${process.env.NEXT_PUBLIC_PINATA_GATEWAY}/ipfs/${jobPictureIPFS}?pinataGatewayToken=${process.env.NEXT_PUBLIC_PINATA_GATEWAY_TOKEN}` || '/default-avatar.png'}
               alt="Client Avatar"
               width={160}
               height={160}
