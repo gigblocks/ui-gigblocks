@@ -15,14 +15,13 @@ export default function page() {
     console.log(code)
 
     const paramsGithub = queryString.stringify({
-        client_id: "Ov23liywHDeFSKkPGo84",
-        redirect_uri: 'http://localhost:3000/profile?platform=github',
+        client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
+        redirect_uri: process.env.NEXT_PUBLIC_GITHUB_REDIRECT,
         scope: ['read:user', 'user:email'].join(' '), // space seperated string
         allow_signup: true,
     });
 
-    const linkedinRedirect = 'http://localhost:3000/profile?platform=linkedin'
-    const linkedinLoginUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&state=true&client_id=${'86tbnpifefktwz'}&redirect_uri=${linkedinRedirect}&scope=r_liteprofile%20r_emailaddress`
+    const linkedinLoginUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_LINKEDIN_REDIRECT}&state=true&scope=profile%20email`
 
     const githubLoginUrl = `https://github.com/login/oauth/authorize?${paramsGithub}`;
 
