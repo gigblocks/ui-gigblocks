@@ -201,7 +201,7 @@ export default function Register() {
     }
   }
   return (
-    <section className="bg-green-500 py-12 h-full">
+    <section className="bg-green-500 py-12 min-h-screen">
       <div className="main-title text-center pt-8">
         <h1 className="font-bold text-4xl text-white">Register</h1>
       </div>
