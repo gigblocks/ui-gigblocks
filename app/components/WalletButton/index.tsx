@@ -86,19 +86,23 @@ export default function WalletButton({
     config,
   });
   const handleDisconnect = () => {
-    disconnect();
+    disconnect()
     // Reset localStorage
-    setUsername(null);
-    setWalletAddress(null);
-    setIsEnsVerified(null);
-    setHasShownModal(null);
-    localStorage.removeItem('username');
-    localStorage.removeItem('wallet_address');
-    localStorage.removeItem('is_ens_verified');
-    localStorage.removeItem('role');
-    setDisplayName("");
-    window.location.href = "/";
-  };
+    setUsername(null)
+    setWalletAddress(null)
+    setIsEnsVerified(null)
+    setHasShownModal(null)
+    localStorage.removeItem('username')
+    localStorage.removeItem('wallet_address')
+    localStorage.removeItem('is_ens_verified')
+    localStorage.removeItem('role')
+    localStorage.removeItem('hasShownRegistrationModal')
+    setDisplayName("")
+    // Force a re-render or update of the component
+    setTimeout(() => {
+      window.location.reload()
+    }, 100)
+  }
 
   const result = useReadContract({
     abi: GigBlocksAbi,

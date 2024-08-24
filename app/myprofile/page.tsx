@@ -55,7 +55,7 @@ export default function Page() {
   const [countdown, setCountdown] = useState(0);
   const [isClaimingENS, setIsClaimingENS] = useState(false);
   const [isEnsVerified, setIsEnsVerified] = useState(false);
-  const [showENSModal, setShowENSModal] = useState(false);
+  // const [showENSModal, setShowENSModal] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -81,14 +81,12 @@ export default function Page() {
     address: GIGBLOCKS_ADDRESS,
     functionName: "getReputationScore",
     args: [address],
-  });
+  }) as { data: number };
 
   const { data: profileData } = useProfile(address as string);
   const { data: reputationData } = useReputation(address as string);
-  console.info(profileData);
-  console.info(reputationData);
 
-  const { writeContract } = useWriteContract();
+  const { writeContract, error } = useWriteContract();
 
   const connectedPlatforms = {
     github: !!(reputationData?.socialMediaFlags & 1),
@@ -97,18 +95,18 @@ export default function Page() {
   };
 
   useEffect(() => {
+    if (error) {
+      console.error("Error claiming ENS:", error);
+    }
+  }, [error]);
+
+  useEffect(() => {
     if (!isConnected) {
       router.push("/");
     } else if (isConnected && result.data === false) {
       router.push("/");
     }
   }, [isConnected, result.data, router]);
-
-  useEffect(() => {
-    if (isEnsVerified && reputationData && !reputationData.hasEns) {
-      setShowENSModal(true);
-    }
-  }, [isEnsVerified, reputationData]);
 
   const paramsGithub = queryString.stringify({
     client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
@@ -216,62 +214,79 @@ export default function Page() {
       alert("An error occurred while claiming ENS. Please try again later.");
     } finally {
       setIsClaimingENS(false);
-      setShowENSModal(false);
     }
   };
+
+  // const handleClaimENS = async () => {
+  //   try {
+  //     await writeContract({
+  //       address: GIGBLOCKS_ADDRESS,
+  //       abi: GigBlocksAbi,
+  //       functionName: 'claimENS',
+  //       account: address,
+  //     });
+  //     // Handle success (e.g., show a success message, update UI)
+  //   } catch (err) {
+  //     console.error("Error claiming ENS:", err);
+  //     // Handle error (e.g., show error message to user)
+  //   }
+  // };
 
   const profileDetail = profileData?.profileDetail || {};
   const registrationDate = profileData?.registrationDate
     ? new Date(profileData.registrationDate * 1000)
     : null;
 
-  useEffect(() => {
-    if (isEnsVerified && reputationData && !reputationData.hasEns) {
-      setShowENSModal(true);
-    }
-  }, [isEnsVerified, reputationData]);
+  // useEffect(() => {
+  //   if (isEnsVerified && reputationData && !reputationData.hasEns) {
+  //     setShowENSModal(true);
+  //   }
+  // }, [isEnsVerified, reputationData]);
 
-  // function ensModal() {
-  //   return (
-  //     <Dialog open={showENSModal} onOpenChange={setShowENSModal}>
-  //       <DialogContent className="bg-gradient-to-br from-indigo-100 to-purple-100 p-6 rounded-lg shadow-xl">
-  //         <DialogHeader className="space-y-4">
-  //           <DialogTitle className="text-3xl font-bold text-indigo-800 text-center">
-  //             Elevate Your Reputation!
-  //           </DialogTitle>
-  //           <DialogDescription className="text-lg text-gray-700 text-center">
-  //             <p className="mb-4">
-  //               Claim your ENS now and watch your reputation soar by up to <span className="font-semibold text-purple-600">50 points</span>!
-  //             </p>
-  //             <p className="italic">
-  //               Don't let this chance to enhance your profile slip away.
-  //             </p>
-  //           </DialogDescription>
-  //         </DialogHeader>
-  //         <div className="mt-6 flex justify-center">
-  //           <Button
-  //             onClick={() => writeContract({
-  //               address: GIGBLOCKS_ADDRESS,
-  //               abi: GigBlocksAbi,
-  //               functionName: 'claimENS',
-  //               args: [address],
-  //             })}
-  //             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105"
-  //           >
-  //             Claim Your ENS Now
-  //           </Button>
-  //         </div>
-  //       </DialogContent>
-  //     </Dialog>
-  //   );
-  // }
-  
+//  function ensModal() {
+//     return (
+//       <Dialog open={showENSModal} onOpenChange={setShowENSModal}>
+//         <DialogContent className="bg-gradient-to-br from-indigo-100 to-purple-100 p-6 rounded-lg shadow-xl">
+//           <DialogHeader className="space-y-4">
+//             <DialogTitle className="text-3xl font-bold text-indigo-800 text-center">
+//               Elevate Your Reputation!
+//             </DialogTitle>
+//             <DialogDescription className="text-lg text-gray-700 text-center">
+//               <p className="mb-4">
+//                 Claim your ENS now and watch your reputation soar by up to <span className="font-semibold text-purple-600">50 points</span>!
+//               </p>
+//               <p className="italic">
+//                 Don't let this chance to enhance your profile slip away.
+//               </p>
+//             </DialogDescription>
+//           </DialogHeader>
+//           <div className="mt-6 flex justify-center">
+//           <Button
+//             onClick={handleClaimENS}
+//             disabled={isPending}
+//             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105"
+//           >
+//             {isPending ? 'Claiming...' : 'Claim Your ENS Now'}
+//           </Button>
+//           </div>
+//         </DialogContent>
+//       </Dialog>
+//     );
+//   }
+
+
 
   return (
     <>
-      {/* {showENSModal && ensModal()} */}
+    {/* {showENSModal && ensModal()} */}
       <Header1 />
       <main className="container mx-auto px-4 pt-[120px] pb-10">
+        {reputationScore < 10 && (
+          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-8" role="alert">
+            <p className="font-bold">Attention!</p>
+            <p>Your reputation score is below 10. Complete more tasks to increase your score and unlock more features!</p>
+          </div>
+        )}
         <div className="max-w-7xl mx-auto">
           <Card className="bg-gradient-to-r from-pink-50 to-purple-50 shadow-lg mb-8">
             <CardContent className="flex items-center p-6">
@@ -284,6 +299,20 @@ export default function Page() {
                 <h2 className="text-2xl font-bold text-gray-800">
                   {profileDetail.username}
                 </h2>
+                <a
+                  href={`https://ens.app/${profileDetail.username}.gigblocks.eth`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-1 text-lg text-indigo-600 hover:text-indigo-800 transition-colors duration-300"
+                >
+                  <span className="flex items-center">
+                    <img src="/ens.png" alt="ENS" className="w-5 h-5 mr-2" />
+                    {profileDetail.username}.gigblocks.eth
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </span>
+                </a>
                 <p className="text-lg text-gray-600">
                   {profileDetail.preference}
                 </p>
@@ -305,7 +334,7 @@ export default function Page() {
                 </div>
               </div>
               <div className="flex space-x-2">
-                <Button
+              <Button
                   onClick={claimFreeENS}
                   disabled={isClaimingENS || !canClaimENS || isEnsVerified}
                   className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-300"
@@ -360,26 +389,6 @@ export default function Page() {
                   )}
                 </Button>
                 </a>
-                <a href={twitterLoginUrl} rel="noopener noreferrer">
-                <Button
-                  className={`${
-                    connectedPlatforms.twitter
-                      ? "opacity-70 cursor-not-allowed"
-                      : ""
-                  } bg-sky-500 hover:bg-sky-400 text-white transition-colors duration-300`}
-                  disabled={connectedPlatforms.twitter}
-                >
-                  <Twitter className="w-5 h-5 mr-2" />
-                  {connectedPlatforms.twitter ? (
-                    <span className="relative">
-                      Twitter
-                      <Check className="w-4 h-4 absolute -top-2 -right-4 text-green-500" />
-                    </span>
-                  ) : (
-                    "Twitter"
-                  )}
-                </Button>
-                </a>
               </div>
             </CardContent>
           </Card>
@@ -399,13 +408,6 @@ export default function Page() {
                 color: "text-blue-600",
                 value:  reputationData?.completedProjects || 0,
                 label: "Completed Projects",
-              },
-              {
-                icon: MessageSquare,
-                bg: "bg-yellow-100",
-                color: "text-yellow-600",
-                value: "N/A",
-                label: "In Queue Service",
               },
             ].map((item, index) => (
               <Card
@@ -444,7 +446,7 @@ export default function Page() {
                 </CardContent>
               </Card>
 
-              {profileData.flags === 3 && (
+              {profileData?.flags === 3 && (
                 <>
                   <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
                     <CardHeader>
