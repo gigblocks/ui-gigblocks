@@ -4,9 +4,6 @@ import { useState } from 'react';
 import { Home, FileText, Heart, MessageSquare, Star, FileInput, DollarSign, BarChart2, Briefcase, FolderPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const menuItems = [
-  { icon: Home, label: 'Dashboard', href: '/' },
-  { icon: FileText, label: 'My Proposals', href: '/my-proposals' },
-  { icon: MessageSquare, label: 'Message', href: '/message' },
   { icon: Star, label: 'Reviews', href: '/reviews' },
   { icon: DollarSign, label: 'Payouts', href: '/payouts' },
 ];
@@ -30,17 +27,14 @@ export default function Sidebar({ children }: Readonly<{ children: React.ReactNo
                 isOpen ? 'w-64' : 'w-16'
             } bg-green-500 text-gray-100`}>
                 <div className="mt-4 px-4">
-                    {isOpen && <div className="text-xs text-gray-100 mb-2">Start</div>}
-                    {menuItems.map((item, index) => (
+                    {isOpen && <div className="text-s mb-2">Dashboards</div>}
+                    {manageItems.map((item, index) => (
                         <a key={index} href={item.href} className="flex items-center py-2 px-2 hover:bg-gray-800 rounded">
                             <item.icon size={20} />
                             {isOpen && <span className="ml-3">{item.label}</span>}
                         </a>
                     ))}
-                </div>
-                <div className="mt-6 px-4">
-                    {isOpen && <div className="text-xs text-gray-400 mb-2">Organize and Manage</div>}
-                    {manageItems.map((item, index) => (
+                    {menuItems.map((item, index) => (
                         <a key={index} href={item.href} className="flex items-center py-2 px-2 hover:bg-gray-800 rounded">
                             <item.icon size={20} />
                             {isOpen && <span className="ml-3">{item.label}</span>}

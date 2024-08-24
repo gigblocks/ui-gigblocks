@@ -36,8 +36,8 @@ export default function Header1() {
         </div>
         <div className="hidden md:flex items-center space-x-4">
           {isConnected && isRegistered ? (
-            <Link href="/dashboard" className="bg-white text-green-500 px-11 py-3 rounded-full hover:bg-green-100 transition duration-300 font-semibold shadow-md hover:shadow-lg text-lg">
-              Go to Dashboard
+            <Link href="/manage-projects" className="bg-white text-green-500 px-11 py-3 rounded-full hover:bg-green-100 transition duration-300 font-semibold shadow-md hover:shadow-lg text-lg">
+              Manage Project
             </Link>
           ) : (
             <Link href="/register" className="bg-white text-green-500 px-11 py-1.5 rounded-full hover:bg-green-100 transition duration-300 font-semibold shadow-md hover:shadow-lg text-lg">
