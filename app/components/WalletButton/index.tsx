@@ -1,18 +1,26 @@
-import { useState, useEffect } from "react";
-import { useAccount, useDisconnect, useReadContract } from "wagmi";
-import Link from "next/link";
-import {
-  config,
-  GigBlocksAbi,
-  GIGBLOCKS_ADDRESS,
-  BASE_URL,
-} from "@/app/config";
-import Modal from "@mui/material/Modal";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useState, useEffect } from 'react';
+import { useAccount, useDisconnect, useReadContract } from 'wagmi'
+import Link from 'next/link';
+import { config, GigBlocksAbi, GIGBLOCKS_ADDRESS } from '@/app/config'
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import { useQuery } from '@tanstack/react-query'
+import axios from 'axios'
+import { BASE_URL } from '@/app/config'
+
+function useProfile(address: string) {
+  return useQuery({
+    queryKey: ['profile', address],
+    queryFn: async () => {
+      if (!address) return null
+      const response = await axios.get(`${BASE_URL}/profiles/${address}`)
+      return response.data
+    },
+    enabled: !!address
+  })
+}
 
 function useGetENS() {
   const [username, setUsername] = useLocalStorage("username");
@@ -77,6 +85,19 @@ export default function WalletButton({
   const account = useAccount({
     config,
   });
+  const handleDisconnect = () => {
+    disconnect();
+    // Reset localStorage
+    setUsername(null);
+    setWalletAddress(null);
+    setIsEnsVerified(null);
+    setHasShownModal(null);
+    localStorage.removeItem('username');
+    localStorage.removeItem('wallet_address');
+    localStorage.removeItem('is_ens_verified');
+    localStorage.removeItem('role');
+    setDisplayName("");
+  };
 
   const result = useReadContract({
     abi: GigBlocksAbi,
@@ -84,6 +105,8 @@ export default function WalletButton({
     functionName: "isRegistered",
     args: [account.address],
   });
+
+  const { data: profileData } = useProfile(account.address as string)
 
   useEffect(() => {
     if (account.isConnected) {
@@ -111,6 +134,14 @@ export default function WalletButton({
     }
   }, [isEnsVerified, username, account.address]);
 
+  useEffect(() => {
+    if (account.isConnected && result.data === true && profileData) {
+      localStorage.setItem('username', profileData.profileDetail.username);
+      localStorage.setItem('role', profileData.flags);
+      localStorage.setItem('wallet_address', account.address as string);
+    }
+  }, [account.isConnected, result.data, profileData]);
+
   const handleCloseModal = () => setOpenModal(false);
 
   if (!account.isConnected) {
@@ -130,14 +161,14 @@ export default function WalletButton({
           <div className="py-1">
             {result.data === true && (
               <Link
-                href="/profile"
+                href="/myprofile"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
               >
                 Profile
               </Link>
             )}
             <button
-              onClick={() => disconnect()}
+              onClick={handleDisconnect}
               className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
             >
               Disconnect
