@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from 'react';
-import { Home, FileText, Heart, MessageSquare, Star, FileInput, DollarSign, BarChart2, Briefcase, FolderPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAccount, useReadContract } from 'wagmi';
 import { config, GIGBLOCKS_ADDRESS, GigBlocksAbi } from '@/app/config';
+import Link from 'next/link';
+import { Star, DollarSign, FolderPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const menuItems = [
   { icon: Star, label: 'Reviews', href: '/reviews' },
@@ -36,7 +37,13 @@ export default function Sidebar({ children }: Readonly<{ children: React.ReactNo
                 isOpen ? 'w-64' : 'w-16'
             } bg-green-500 text-gray-100`}>
                 <div className="mt-4 px-4">
-                    {isOpen && <div className="text-s mb-2">Dashboards</div>}
+                    {isOpen && <div className="text-s mb-2">
+                        <div className="flex items-center space-x-2">
+                            <Link href="/" className="flex items-center">
+                            <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
+                            </Link>
+                        </div>
+                        </div>}
                     {manageItems.map((item, index) => (
                         <a key={index} href={item.href} className="flex items-center py-2 px-2 hover:bg-gray-800 rounded">
                             <item.icon size={20} />
