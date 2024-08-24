@@ -22,8 +22,10 @@ export default function WalletButton({ registerSession }: Readonly<{ registerSes
   })
 
   useEffect(() => {
-    if (account.isConnected && result.data === false) {
+    const hasShownModal = localStorage.getItem('hasShownRegistrationModal');
+    if (account.isConnected && result.data === false && !hasShownModal) {
       setOpenModal(true);
+      localStorage.setItem('hasShownRegistrationModal', 'true');
     }
   }, [account.isConnected, result.data]);
 
