@@ -13,6 +13,7 @@ const menuItems = [
 
 const manageItems = [
   { icon: FolderPlus, label: 'Manage Projects', href: '/manage-projects' },
+  { icon: FolderPlus, label: 'Create Projects', href: '/create-projects' },
 ];
 
 export default function Sidebar({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -27,15 +28,9 @@ export default function Sidebar({ children }: Readonly<{ children: React.ReactNo
             {/* Sidebar */}
             <div style={{ overflow: 'visible' }} className={`relative transition-all duration-300 ease-in-out z-0 ${
                 isOpen ? 'w-64' : 'w-16'
-            } bg-gray-900 text-white`}>
-                <div className="p-4 flex items-center">
-                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-bold mr-2">
-                        R
-                    </div>
-                    {isOpen && <span className="font-bold text-xl">Freeio.</span>}
-                </div>
+            } bg-green-500 text-gray-100`}>
                 <div className="mt-4 px-4">
-                    {isOpen && <div className="text-xs text-gray-400 mb-2">Start</div>}
+                    {isOpen && <div className="text-xs text-gray-100 mb-2">Start</div>}
                     {menuItems.map((item, index) => (
                         <a key={index} href={item.href} className="flex items-center py-2 px-2 hover:bg-gray-800 rounded">
                             <item.icon size={20} />
