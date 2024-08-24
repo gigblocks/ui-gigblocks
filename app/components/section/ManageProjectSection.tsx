@@ -13,7 +13,7 @@ import { Tooltip, OutlinedInput, InputAdornment } from '@mui/material';
 import DatePickerComponent from '../DatePicker';
 import moment from 'moment';
 import BasicModal from '../Modal';
-import { parseGwei } from 'viem';
+import { parseEther, parseGwei } from 'viem';
 import { writeContract } from 'viem/actions';
 
 function useManageProjects(isClient:any, walletAddress:string | undefined, limit = 10, status = 0, offset = 0) {
@@ -87,15 +87,18 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
     isSuccess,
     writeContract 
   } = useWriteContract()
+  console.log(error, 'woi')
   const ethPrice = ethData?.USD ?  (Number(form.payableAmmount) / ethData.USD).toFixed(6) : 0;
   const wei = parseGwei(`${ethPrice}`);
+  const eth = parseEther(ethPrice.toString())
+
   const triggerAssignFreelancer = () => {
     writeContract({
       abi: GigBlocksAbi,
       address: WALLET_ADDRESS,
       functionName: 'assignFreelancer',
-      args: [projectId, isShow, wei, form.deadline],
-      value: wei,
+      args: [projectId, isShow, eth, form.deadline],
+      value: eth,
     })
     setOpen(false)
   }
@@ -169,13 +172,12 @@ export default function ManageProjectSection() {
   const itemsPerPage = 6;
   const account = useAccount()
   const {data: isClient} = useReadContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'isClient', args: [account.address] })
-  console.log(isClient, 'woiiii')
   const { data: projectData, refetch } = useManageProjects(isClient, account.address, 10, status)
-  console.log(projectData, 'oioioioi')
+
   useEffect(() => {
     refetch()
   }, [status, isSuccess])
-
+  console.log(error, 'wkwk')
   const renderActionButtons = (tab: string, project: any) => {
     switch (tab) {
       case "Open Projects":
@@ -196,30 +198,42 @@ export default function ManageProjectSection() {
             <Button variant="outline" size="sm">
               <MessageSquare size={14} className="text-blue-600" />
             </Button>
-            <Button variant="outline" size="sm" className='ml-2' onClick={() => {
+            {!isClient ? <Button variant="outline" size="sm" className='ml-2' onClick={() => {
               writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'completeJob', args: [project.id]})
             }}>
               <Check size={14} className="text-green-600" />
-            </Button>
+            </Button> : null}
           </>
         );
       case "Completed Projects":
         return (
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={() => {
-              writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'approveJob', args: [project.id]})
-            }}>
-              <Check size={14} className="text-green-600" />
-              Approve
-            </Button>
-            <Button variant="outline" size="sm">
-              <RefreshCw size={14} className="text-orange-600" />
-              Revision
-            </Button>
+            {isClient ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => {
+                  writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'approveJob', args: [project.id]})
+                }}>
+                  <Check size={14} className="text-green-600" />
+                  Approve
+                </Button>
+                <Button variant="outline" size="sm">
+                  <RefreshCw size={14} className="text-orange-600" />
+                  Revision
+                </Button>
+              </>
+            ) : null}
           </div>
         );
       case "Approved Projects":
-        return null;
+        return (
+          <>
+            {isClient == false && !project.isPaid ? <Button variant="outline" size="sm" className='ml-2' onClick={() => {
+              writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'claimPayment', args: [project.id]})
+            }}>
+              <Check size={14} className="text-green-600 mr-2" /> Claim Payment
+            </Button> : null}
+          </>
+        )
       default:
         return null;
     }
