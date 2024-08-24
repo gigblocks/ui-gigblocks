@@ -25,9 +25,9 @@ export default function Sidebar({ children }: Readonly<{ children: React.ReactNo
     return (
         <div className="flex h-screen">
             {/* Sidebar */}
-            <div className={`relative transition-all duration-300 ease-in-out ${
+            <div style={{ overflow: 'visible' }} className={`relative transition-all duration-300 ease-in-out z-0 ${
                 isOpen ? 'w-64' : 'w-16'
-            } bg-gray-900 text-white overflow-y-auto`}>
+            } bg-gray-900 text-white`}>
                 <div className="p-4 flex items-center">
                     <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-bold mr-2">
                         R
@@ -55,7 +55,7 @@ export default function Sidebar({ children }: Readonly<{ children: React.ReactNo
 
                 {/* Toggle button */}
                 <button
-                    className="absolute top-2 -right-3 bg-gray-700 text-white p-1 rounded-full focus:outline-none"
+                    className="absolute top-2 -right-3 bg-gray-700 text-white p-1 rounded-full focus:outline-none z-30"
                     onClick={toggleSidebar}
                 >
                     {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
