@@ -46,9 +46,9 @@ export default function ProjectCard({ data, id }: ProjectCardProps) {
             <Image
               src={`${process.env.NEXT_PUBLIC_PINATA_GATEWAY}/ipfs/${jobPictureIPFS}` || '/default-avatar.png'}
               alt="Client Avatar"
-              width={80}
-              height={80}
-              className="rounded-full border-4 border-gray-200"
+              width={160}
+              height={160}
+              className="border-4 border-gray-200"
             />
             <div className="absolute bottom-0 -right-1 bg-green-500 rounded-full p-1">
               <div className="bg-white rounded-full p-1">
@@ -79,7 +79,7 @@ export default function ProjectCard({ data, id }: ProjectCardProps) {
             </div>
           </div>
         </div>
-        <div className="text-right mt-6 md:mt-0 ml-0 md:ml-6 flex flex-col items-end">
+        <div className="text-right mt-6 md:mt-0 ml-0 md:ml-6 flex flex-col items-end min-w-[150px]">
           <h4 className="font-bold text-2xl text-green-600 mb-2">
             ${priceRange?.min} - ${priceRange?.max}
           </h4>
