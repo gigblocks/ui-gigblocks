@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from 'react';
+import { useAccount, useReadContract } from 'wagmi';
+import { config, GIGBLOCKS_ADDRESS, GigBlocksAbi } from '@/app/config';
 import Link from 'next/link';
 import { Star, DollarSign, FolderPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -9,18 +11,25 @@ const menuItems = [
   { icon: DollarSign, label: 'Payouts', href: '/payouts' },
 ];
 
-const manageItems = [
+let manageItems = [
   { icon: FolderPlus, label: 'Manage Projects', href: '/manage-projects' },
   { icon: FolderPlus, label: 'Create Projects', href: '/create-projects' },
 ];
 
 export default function Sidebar({ children }: Readonly<{ children: React.ReactNode }>) {
-    const [isOpen, setIsOpen] = useState<boolean>(true);
+  const account = useAccount()
+  const {data: isClient} = useReadContract({ abi: GigBlocksAbi, address: GIGBLOCKS_ADDRESS, functionName: 'isClient', args: [account.address] })  
+  const [isOpen, setIsOpen] = useState<boolean>(true);
 
     const toggleSidebar = () => {
         setIsOpen(!isOpen);
     };
-
+    manageItems = !isClient ? [
+      { icon: FolderPlus, label: 'Manage Projects', href: '/manage-projects' }] 
+    : [
+      { icon: FolderPlus, label: 'Manage Projects', href: '/manage-projects' },
+      { icon: FolderPlus, label: 'Create Projects', href: '/create-projects' },
+    ]
     return (
         <div className="flex h-screen">
             {/* Sidebar */}
@@ -41,12 +50,14 @@ export default function Sidebar({ children }: Readonly<{ children: React.ReactNo
                             {isOpen && <span className="ml-3">{item.label}</span>}
                         </a>
                     ))}
-                    {menuItems.map((item, index) => (
+                    {menuItems.map((item, index) => {
+                      return (
                         <a key={index} href={item.href} className="flex items-center py-2 px-2 hover:bg-gray-800 rounded">
                             <item.icon size={20} />
                             {isOpen && <span className="ml-3">{item.label}</span>}
                         </a>
-                    ))}
+                      )
+                    })}
                 </div>
 
                 {/* Toggle button */}

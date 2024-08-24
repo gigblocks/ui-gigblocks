@@ -7,15 +7,18 @@ import {
   useQuery,
 } from '@tanstack/react-query'
 import axios from 'axios'
-import { BASE_URL, GigBlocksAbi, GIGBLOCKS_ADDRESS } from '@/app/config';
+import { BASE_URL, GigBlocksAbi, GIGBLOCKS_ADDRESS, config } from '@/app/config';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import { Tooltip, OutlinedInput, InputAdornment } from '@mui/material';
 import DatePickerComponent from '../DatePicker';
 import moment from 'moment';
 import BasicModal from '../Modal';
 import { parseEther, parseGwei } from 'viem';
-import { writeContract } from 'viem/actions';
 import { waitForTransactionReceipt } from "@wagmi/core";
+import { toast } from 'react-toastify';
+import { Address } from 'viem';
+import { JobCategory } from '@/app/data/jobCategory';
+
 
 function useManageProjects(isClient:any, walletAddress:string | undefined, limit = 10, status = 0, offset = 0) {
   return useQuery({
@@ -29,6 +32,8 @@ function useManageProjects(isClient:any, walletAddress:string | undefined, limit
         return response.data
       }
     },
+    enabled: true,
+    refetchOnWindowFocus: false
   })
 }
 
@@ -39,16 +44,41 @@ function useGetETH() {
       const response = await axios.get(`https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD`)
       return response.data
     },
-    staleTime: Infinity
+    staleTime: Infinity,
+    enabled: true,
+    refetchOnWindowFocus: false
   })
 }
 
-const tabs = [
+let tabs = [
   "Open Projects",
   "Ongoing Projects",
   "Completed Projects",
   "Approved Projects"
 ];
+
+const toastText:any = {
+  "Open Projects": {
+    loading: 'Assigning freelance...',
+    success: 'Assign freelance success',
+    error: 'Assign freelance failed'
+  },
+  "Ongoing Projects": {
+    loading: 'Completing project...',
+    success: 'Project completed',
+    error: 'completing project failed'
+  },
+  "Completed Projects": {
+    loading: 'Claiming payment...',
+    success: 'Claim payment success',
+    error: 'Claim payment failed'
+  },
+  "Approved Projects": {
+    loading: '',
+    success: '',
+    error: ''
+  }
+}
 
 const getStatusStyle = (status: string): string => {
   const baseStyle = "px-2 py-1 text-xs font-medium rounded-full inline-block text-center";
@@ -84,8 +114,6 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
 
   const {
     error,
-    isPending, 
-    isSuccess,
     writeContract 
   } = useWriteContract()
   console.log(error, 'woi')
@@ -160,25 +188,55 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
 };
 
 export default function ManageProjectSection() {
+  const account = useAccount()
   const {
     error,
     isPending, 
     isSuccess,
-    writeContract 
+    data: writeData,
+    writeContract
   } = useWriteContract()
 
-  const [activeTab, setActiveTab] = useState("Open Projects");
-  const [status, setStatus] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-  const account = useAccount()
   const {data: isClient} = useReadContract({ abi: GigBlocksAbi, address: GIGBLOCKS_ADDRESS, functionName: 'isClient', args: [account.address] })
-  const { data: projectData, refetch } = useManageProjects(isClient, account.address, 10, status)
-
+  const [status, setStatus] = useState(isClient ? 0 : 1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data: projectData, refetch, isFetching } = useManageProjects(isClient, account.address, 10, status, currentPage)
+  console.log(error)
+  const [activeTab, setActiveTab] = useState(isClient ? "Open Projects" : "Ongoing Projects");
+  if (!isClient) {
+    tabs = [
+      "Ongoing Projects",
+      "Completed Projects",
+      "Approved Projects"
+    ];
+  } 
   useEffect(() => {
     refetch()
-  }, [status, isSuccess])
-  console.log(error, 'wkwk')
+  }, [status])
+  console.log(isFetching, 'oioioi')
+  useEffect(() => {
+    const notify = async () => {
+      await waitForTransactionReceipt(config, {
+        hash: writeData as Address
+      })
+      
+    }
+    if (writeData && isSuccess) {      
+      toast.loading(toastText[activeTab].loading)  
+      notify().then(() => {
+        toast.dismiss()
+        toast.success(toastText[activeTab].success)
+        setTimeout(() => {
+          refetch()
+        }, 1000)
+      }).catch(err => {
+        console.log(err)
+        toast.dismiss();
+        toast.error(toastText[activeTab].failed);
+      })
+    }
+  }, [writeData, isSuccess])
+
   const renderActionButtons = (tab: string, project: any) => {
     switch (tab) {
       case "Open Projects":
@@ -281,7 +339,7 @@ export default function ManageProjectSection() {
       </div>
     </div>
   );
-
+  console.log(projectData, 'woi')
   return (
     <section className="p-3">
       <div className="mb-6">
@@ -296,7 +354,7 @@ export default function ManageProjectSection() {
               }`}
               onClick={() => {
                 setActiveTab(tab)
-                setStatus(i)
+                setStatus(isClient ? i : i+1)
               }}
             >
               {tab}
@@ -314,16 +372,13 @@ export default function ManageProjectSection() {
                 {activeTab === "Open Projects" ? "Applications" : "Location"}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {activeTab === "Open Projects" ? "Created & Expired" : "Time"}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {activeTab === "Open Projects" ? "Status" : "Category"}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {projectData?.length ? projectData.map((project:any, index:any) => (
+            {isFetching ? <>loading...</> : projectData?.length ? projectData.map((project:any, index:any) => (
               <tr key={index}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
@@ -335,25 +390,22 @@ export default function ManageProjectSection() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {activeTab === "Open Projects" ? (
                     <span className={getApplicationsStyle('applications' in project ? project.applications : '')}>
-                      {'applications' in project ? project.applications : ''}
+                      {project.applicantCount}
                     </span>
                   ) : (
                     <span className="text-sm text-gray-500">
-                      {'location' in project ? project.location : ''}
+                      {project.jobDetails.clientLocation}
                     </span>
                   )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {'createdExpired' in project ? project.createdExpired : project.time}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {activeTab === "Open Projects" ? (
                     <span className={getStatusStyle('status' in project ? project.status : '')}>
-                      {'status' in project ? project.status : ''}
+                      {'status' in project ? JobCategory[project.category] : ''}
                     </span>
                   ) : (
                     <span className="text-sm text-gray-500">
-                      {'category' in project ? project.category : ''}
+                      {'category' in project ? JobCategory[project.category] : ''}
                     </span>
                   )}
                 </td>

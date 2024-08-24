@@ -1,7 +1,9 @@
 "use client"
 
 import Sidebar from "@/app/components/Sidebar"
-import ManageProjectSection from "@/app/components/section/ManageProjectSection"
+import dynamic from 'next/dynamic';
+
+const ManageProjectSection = dynamic(() => import('@/app/components/section/ManageProjectSection'), { ssr: false });
 
 export default function ManageProjects() {
   return (
