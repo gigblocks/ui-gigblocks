@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { config } from "./config";
 import { cookieToInitialState } from 'wagmi'
 import AppKitProvider from "./context/AppKitProvider";
+import ToastProvider from "./context/ToastProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AppKitProvider initialState={initialState}>{children}</AppKitProvider>
+        <ToastProvider>
+          <AppKitProvider initialState={initialState}>{children}</AppKitProvider>
+        </ToastProvider>
       </body>
     </html>
   );
