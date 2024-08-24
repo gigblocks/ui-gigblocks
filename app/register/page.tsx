@@ -112,6 +112,7 @@ export default function Register() {
       })
       await waitForTransactionReceipt(config, {
         hash: result as Address,
+        pollingInterval: 10_000
       })
       toast.success("Register successfully")
       setTimeout(() => {
