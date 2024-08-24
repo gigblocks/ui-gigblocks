@@ -37,14 +37,14 @@ export default function WalletButton({ registerSession }: Readonly<{ registerSes
 
   return (
     <>
-      <div className="relative inline-block text-left">
+      <div className="relative inline-block text-left dropdown">
         <button
           type="button"
           className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
         >
           {account.address && `${account.address.slice(0, 6)}...${account.address.slice(-4)}`}
         </button>
-        <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none">
+        <div className="dropdown-content origin-top-right absolute right-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none">
           <div className="py-1">
             {result.data === true && (
               <Link href="/my-profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
