@@ -98,7 +98,9 @@ const IconPlaceholder: React.FC<{ color: string }> = ({ color }) => (
 const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, projectId: number }) => {
   const { data: ethData } = useGetETH()
   const [open, setOpen] = useState(false)
-  const [choosedApplicant, setChoosedApplicant] = useState<any>({})
+  const [choosedApplicant, setChoosedApplicant] = useState<any>({
+    bidAmount: 1
+  })
   const [form, setForm] = useState({
     payableAmmount: '',
     deadline: 0
@@ -117,22 +119,20 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
   } = useWriteContract()
   console.log(error, 'woi')
   const ethPrice = ethData?.USD ?  (Number(form.payableAmmount) / ethData.USD).toFixed(6) : 0;
-  const wei = parseGwei(`${ethPrice}`);
   const eth = parseEther(ethPrice.toString())
   
   const triggerAssignFreelancer = () => {
+    const wei = parseGwei(BigInt(choosedApplicant?.bidAmount).toString());
     writeContract({
       abi: GigBlocksAbi,
       address: GIGBLOCKS_ADDRESS,
       functionName: 'assignFreelancer',
-      args: [projectId, choosedApplicant?.freelancerWalletAddress, choosedApplicant?.bidAmount, Number(choosedApplicant?.bidTime)],
-      value: parseEther((BigInt(choosedApplicant?.bidAmount || 0) / BigInt(1000000000)).toString()),
+      args: [projectId, choosedApplicant?.freelancerWalletAddress, wei, Number(choosedApplicant?.bidTime)],
+      value: wei,
     })
     setOpen(false)
   }
 
-  console.log(choosedApplicant)
-  console.log((BigInt(choosedApplicant?.bidAmount) / BigInt(1000000000)), 'anjay')
   return (
     <>
       <Button variant="outline" size="sm" className="mr-2" onClick={() => setOpen(true)}>
