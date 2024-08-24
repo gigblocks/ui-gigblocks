@@ -122,11 +122,11 @@ export default function Register() {
         hash: result as Address,
         pollingInterval: 10_000
       })
+      toast.dismiss()
       toast.success("Register successfully")
       setTimeout(() => {
         router.push('/myprofile')
       }, 1000)
-      setLoading(false)
     } catch (err) {
       console.log(err)
       toast.dismiss();
