@@ -114,6 +114,13 @@ export default function ProjectDetail() {
     setOpen(false)
   }
 
+  const errorPriceRange = () => {
+    if (form.bidAmmount < data?.jobDetails.priceRange.min || form.bidAmmount > data?.jobDetails?.priceRange.max) {
+      return true;
+    }
+    return false;
+  }
+  console.log(data, 'woi')
   return (
     <>
       <Header1 />
@@ -223,17 +230,11 @@ export default function ProjectDetail() {
               InputProps={{
                 startAdornment: <InputAdornment position="start">$</InputAdornment>,
               }}
+              error={errorPriceRange()}
+              helperText={errorPriceRange() ? 'exceeded price range' : ''}
             />
-            <TextField
-              label="Estimated Time (in days)"
-              type="number"
-              value={form.bidTime}
-              onChange={(e) => setForm({...form, bidTime: parseInt(e.target.value)})}
-              fullWidth
-              variant="outlined"
-              InputProps={{
-                endAdornment: <InputAdornment position="end">days</InputAdornment>,
-              }}
+            <DatePickerComponent
+              onChange={(val:any) => setForm({...form, bidTime: moment(val).valueOf()})} isYearOnly={false}
             />
             <TextField
               label="Cover Letter"
@@ -252,6 +253,7 @@ export default function ProjectDetail() {
               fullWidth
               size="large"
               className="mt-4 py-3 text-lg font-semibold transition-all duration-300 hover:bg-green-700"
+              disabled={errorPriceRange()}
             >
               Submit Proposal
             </Button>

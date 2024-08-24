@@ -13,10 +13,9 @@ import { Tooltip, OutlinedInput, InputAdornment } from '@mui/material';
 import DatePickerComponent from '../DatePicker';
 import moment from 'moment';
 import BasicModal from '../Modal';
-import { parseEther, parseGwei } from 'viem';
+import { parseEther, parseGwei, Address, } from 'viem';
 import { waitForTransactionReceipt } from "@wagmi/core";
 import { toast } from 'react-toastify';
-import { Address } from 'viem';
 import { JobCategory } from '@/app/data/jobCategory';
 
 
@@ -120,20 +119,20 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
   const ethPrice = ethData?.USD ?  (Number(form.payableAmmount) / ethData.USD).toFixed(6) : 0;
   const wei = parseGwei(`${ethPrice}`);
   const eth = parseEther(ethPrice.toString())
-
+  
   const triggerAssignFreelancer = () => {
     writeContract({
       abi: GigBlocksAbi,
       address: GIGBLOCKS_ADDRESS,
       functionName: 'assignFreelancer',
-      args: [projectId, isShow, eth, form.deadline],
+      args: [projectId, isShow, applicants?.bidAmount, applicants?.bidTime],
       value: eth,
     })
     setOpen(false)
   }
 
   
-
+  console.log(data, 'anjay')
   return (
     <>
       <Button variant="outline" size="sm" className="mr-2" onClick={() => setOpen(true)}>
@@ -164,17 +163,14 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
               {isShow === applicant.freelancerWalletAddress && (
                 <>
                   <div className='border-b border-gray-500 pb-4 items-center'>
-                    <div className='flex gap-4'>
-                      <OutlinedInput
-                        className='w-1/2'
-                        placeholder='payable ammount'
-                        startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                        onChange={(e) => setForm({ ...form, payableAmmount: e.target.value})}
-                      />
-                      <DatePickerComponent isYearOnly={false} onChange={(val:any) => setForm({ ...form, deadline: moment(val).valueOf() })} />
+                    <div>
+                      {/* {} */}
+                      <div>Bid Amount: {((BigInt(applicant.bidAmount) *BigInt(Math.round(ethData.USD)) / BigInt(1000000000000000000))).toString()}</div>
+                      <div>Cover Letter:</div>
+                      <div>{applicant.coverLetter}</div>
                     </div>
                     <div className='flex justify-end w-full mt-4'>
-                      <Button onClick={() => triggerAssignFreelancer()} className='px-10'>Submit</Button>
+                      <Button onClick={() => triggerAssignFreelancer()} className='px-10'>Assign</Button>
                     </div>
                   </div>
                 </>
@@ -339,7 +335,7 @@ export default function ManageProjectSection() {
       </div>
     </div>
   );
-  console.log(projectData, 'woi')
+
   return (
     <section className="p-3">
       <div className="mb-6">
