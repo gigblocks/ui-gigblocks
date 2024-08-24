@@ -15,6 +15,7 @@ import moment from 'moment';
 import BasicModal from '../Modal';
 import { parseEther, parseGwei } from 'viem';
 import { writeContract } from 'viem/actions';
+import { waitForTransactionReceipt } from "@wagmi/core";
 
 function useManageProjects(isClient:any, walletAddress:string | undefined, limit = 10, status = 0, offset = 0) {
   return useQuery({

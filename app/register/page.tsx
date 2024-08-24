@@ -5,7 +5,7 @@ import { Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, Button, Au
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/navigation'
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAccount, useWriteContract } from 'wagmi'
 import { waitForTransactionReceipt } from "@wagmi/core";
 import axios from 'axios'
 import { config, GigBlocksAbi, GIGBLOCKS_ADDRESS, BASE_URL } from "../config";
@@ -31,9 +31,6 @@ export default function Register() {
   const router = useRouter()
   const { writeContractAsync, isError, isPending, isSuccess } = useWriteContract()
   const { isConnected, address } = useAccount()
-  const { } = useWaitForTransactionReceipt({
-    hash: '0x4ca7ee652d57678f26e887c149ab0735f41de37bcad58c9f6d3ed5824f15b74d',
-  })
   const [imgFile, setImgFile] = useState<any>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [flag, setFlag] = useState<number>(0) //0 didnt choose, 1 freelancer, 2 employer

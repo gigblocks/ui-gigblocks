@@ -1,19 +1,21 @@
 "use client"
 
 import { useParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BasicModal from '@/app/components/Modal'
 import { useQuery } from '@tanstack/react-query'
 import DatePickerComponent from '@/app/components/DatePicker'
 import axios from 'axios'
 import { useWriteContract, useAccount } from "wagmi"
-import { BASE_URL, GigBlocksAbi, GIGBLOCKS_ADDRESS } from '@/app/config'
+import { BASE_URL, GigBlocksAbi, GIGBLOCKS_ADDRESS, config } from '@/app/config'
 import { Button, TextField, OutlinedInput, InputAdornment } from '@mui/material'
+import { waitForTransactionReceipt } from "@wagmi/core";
 import moment from 'moment'
 import { MapPin, Calendar, Eye, MessageSquare, DollarSign, Clock, ThumbsUp, Languages, BarChart } from 'lucide-react'
 import Header1 from '@/app/components/header/Header1'
 import Image from 'next/image'
-import { parseGwei } from 'viem';
+import { Address, parseGwei } from 'viem';
+import { toast } from 'react-toastify'
 
 function useGetETH() {
   return useQuery({
@@ -66,8 +68,28 @@ export default function ProjectDetail() {
     bidTime: 0,
     coverLetter: ''
   })
-  const { writeContract , error} = useWriteContract()
+  const { writeContract, data: writeData, isSuccess } = useWriteContract()
   
+  useEffect(() => {
+    const notify = async () => {
+      await waitForTransactionReceipt(config, {
+        hash: writeData as Address
+      })
+      
+    }
+    if (writeData) {      
+      toast.loading('applying for project...')  
+      notify().then(() => {
+        toast.dismiss()
+        toast.success('Apply job successfully')
+      }).catch(err => {
+        console.log(err)
+        toast.dismiss();
+        toast.error("Failed to apply project");
+      })
+    }
+  }, [writeData])
+
   const {data, isLoading} = useQuery({
     queryKey: ['jobsdetail'],
     queryFn: async () => {
@@ -75,16 +97,12 @@ export default function ProjectDetail() {
       return response.data
     },
   })
-
-  console.log(data, "DATA FROM JOB DETAIl")
-
+ 
   const { data: ethData } = useGetETH()
-  console.log(error, 'woi')
-  const triggerFunction = async () => {
+  const triggerFunction = () => {
     const profileDetail = dummyProfileData.profileDetail
     const ethPrice = ethData?.USD ?  (Number(form.bidAmmount) / ethData.USD).toFixed(6) : 0;
     const wei = parseGwei(`${ethPrice}`);
-    console.log(wei, ethPrice, 'price')
     const args = [Number(params.id), dummyProfileData.username, profileDetail.email, wei, form.bidTime, form.coverLetter]
     
     writeContract({
