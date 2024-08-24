@@ -1,16 +1,19 @@
 "use client"
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import WalletButton from "../components/WalletButton"
 import { Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, Button, Autocomplete, Divider, TextField } from '@mui/material'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/navigation'
-import { useAccount, useWriteContract } from 'wagmi'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { waitForTransactionReceipt } from "@wagmi/core";
 import axios from 'axios'
-import { config, GigBlocksAbi, WALLET_ADDRESS, BASE_URL } from "../config";
+import { config, GigBlocksAbi, GIGBLOCKS_ADDRESS, BASE_URL } from "../config";
 import { JobCategory } from "../data/jobCategory";
 import DatePickerComponent from "../components/DatePicker";
 import moment from "moment";
+import { toast } from "react-toastify";
+import { Address } from 'viem';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -26,8 +29,11 @@ const VisuallyHiddenInput = styled('input')({
 
 export default function Register() {
   const router = useRouter()
-  const { writeContract, failureReason, isError, isPending, isSuccess } = useWriteContract()
-  const { isConnected } = useAccount()
+  const { writeContractAsync, isError, isPending, isSuccess } = useWriteContract()
+  const { isConnected, address } = useAccount()
+  const { } = useWaitForTransactionReceipt({
+    hash: '0x4ca7ee652d57678f26e887c149ab0735f41de37bcad58c9f6d3ed5824f15b74d',
+  })
   const [imgFile, setImgFile] = useState<any>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [flag, setFlag] = useState<number>(0) //0 didnt choose, 1 freelancer, 2 employer
@@ -44,15 +50,6 @@ export default function Register() {
   
   const [openEducationForm, setOpenEducationForm] = useState<boolean>(true)
   const [openWorkForm, setOpenWorkForm] = useState<boolean>(true)
-
-  useEffect(() => {
-    if (isError) {
-      console.log(isError, 'woi err')
-    }
-    if (isSuccess) {
-      router.push('/my-profile')
-    }
-  }, [isPending, isError, isSuccess])
 
   const handleRemoveImage = () => {
     setSelectedImage(null);
@@ -74,6 +71,7 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
+      toast.loading("Finishing your mutation...");
       const formData = new FormData()
       formData.append('file', imgFile)
       const { data: pictureData } = await axios.post(BASE_URL + "/files/uploadFile", formData)
@@ -96,14 +94,33 @@ export default function Register() {
       ProfileIPFS.profileType = flag == 1 ? 'freelancer' : 'client'
       const { data } = await axios.post(BASE_URL + '/profiles/uploadIpfs', ProfileIPFS)
       const enumPreference = [JobCategory.indexOf(form.preference)]
-      writeContract({ 
+      const result = await writeContractAsync({ 
         abi: GigBlocksAbi,
-        address: WALLET_ADDRESS,
+        address: GIGBLOCKS_ADDRESS,
         functionName: 'register',
         args: flag == 1 ? [data.IpfsHash, enumPreference, true, false] : [data.IpfsHash, enumPreference, false, true]
+      },
+      {
+        onSuccess: () => {
+          toast.dismiss();
+          toast.loading("Registering...");
+        },
+        onError: () => {
+          toast.dismiss();
+          toast.error("Failed to register account");
+        },
       })
+      await waitForTransactionReceipt(config, {
+        hash: result as Address,
+      })
+      toast.success("Register successfully")
+      setTimeout(() => {
+        router.push('/profile')
+      }, 1000)
     } catch (err) {
-      console.log(err, 'woi wkwk')
+      console.log(err)
+      toast.dismiss();
+      toast.error("Failed to register account");
     }
   }
 
@@ -138,11 +155,12 @@ export default function Register() {
   };
 
   return (
-    <section>
-      <div className="main-title text-center">
-        <h1 className="title">Register</h1>
+    <section className="bg-green-500 py-12 h-full">
+      <div className="main-title text-center pt-8">
+        <h1 className="font-bold text-4xl text-white">Register</h1>
       </div>
-      <div className="bg-white rounded-lg mx-auto w-[50%] px-12 py-16 border-black border-1 border">
+      <div>
+      <div className="bg-white rounded-lg shadow-2xl mx-auto w-[50%] px-12 py-16 border-gray-100 border-1 border my-12">
         <div className="mb-4">
           <h4>Let's create your account!</h4>
         </div>
@@ -186,6 +204,7 @@ export default function Register() {
           <label className="form-label">Country</label>
           <Autocomplete
             disablePortal
+            className="mb-4"
             id="combo-box-demo"
             options={['Indonesia', 'United States']}
             fullWidth
@@ -197,6 +216,7 @@ export default function Register() {
           <Autocomplete
             disablePortal
             id="combo-box-demo"
+            className="mb-4"
             options={JobCategory}
             fullWidth
             value={form.preference}
@@ -210,6 +230,7 @@ export default function Register() {
             options={['CSS', 'HTML', 'JavaScript', 'Web3', 'Backend', 'Frontend']}
             onChange={(e, value) => setForm({...form, skills: value })}
             getOptionLabel={(option) => option}
+            className="mb-4"
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -232,8 +253,8 @@ export default function Register() {
 
           {flag == 1 && (
             <>
-              <label className="form-label">Education</label>
-              <hr style={{ marginTop: 2, marginBottom: 12 }} />
+              <label className="form-label font-semibold mb-2 mt-6 text-xl text-gray-800">Education</label>
+              <hr style={{ marginTop: 4, marginBottom: 12 }} />
               {openEducationForm ?
                 <FormComponent handleSubmit={handleSubmit} /> :
                 <ListComponent list={form.education} />
@@ -245,7 +266,7 @@ export default function Register() {
                   </div>
                 </Divider>
               )}
-              <label className="form-label mt-4">Work Experience</label>
+              <label className="form-label font-semibold mb-2 mt-6 text-xl text-gray-800">Work Experience</label>
               <hr style={{ marginTop: 2, marginBottom: 12 }} />
               {openWorkForm ?
                 <FormComponent handleSubmit={handleSubmit} type="work" /> :
@@ -297,9 +318,10 @@ export default function Register() {
             onClick={handleRegister}
             variant="outlined"
           >
-            Creat Account <i className="fal fa-arrow-right-long" />
+            Create Account <i className="fal fa-arrow-right-long" />
           </Button>
         </div>
+      </div>
       </div>
     </section>
   )
@@ -324,12 +346,13 @@ const FormComponent = ({ handleSubmit, type = 'education' }: Readonly<any>) => {
   return (
     <>
       <div className="mb-4">
-        <label className="form-label">Start date - End date</label>
         <div className="flex justify-between">
           <div className="w-full mr-2">
+            <label className="form-label">Start date</label>
             <DatePickerComponent isYearOnly onChange={(val: any) => setEduForm({...eduForm, startDate: moment(val).year() })} />
           </div>
           <div className="w-full ml-2">
+            <label className="form-label">End date</label>
             <DatePickerComponent isYearOnly onChange={(val: any) => setEduForm({...eduForm, endDate: moment(val).year() })} />
           </div>
         </div>
@@ -362,9 +385,11 @@ const FormComponent = ({ handleSubmit, type = 'education' }: Readonly<any>) => {
           variant="outlined"
         />
       </div>
-      <div className="flex justify-content-end mb-4">
-        <Button variant="outlined" onClick={() => handleSubmit(type, eduForm )} disabled={validation()}>
-          Submit
+      <div className="flex justify-end mb-4">
+        <Button
+          className="px-6 py-2 bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
+          variant="contained" color="success" onClick={() => handleSubmit(type, eduForm )} disabled={validation()}>
+          Submit {type === 'education' ? 'education' : 'work experience'}
         </Button>
       </div>
     </>

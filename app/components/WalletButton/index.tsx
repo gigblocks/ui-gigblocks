@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useDisconnect, useReadContract } from 'wagmi'
 import Link from 'next/link';
-import { config, GigBlocksAbi, WALLET_ADDRESS } from '@/app/config'
+import { config, GigBlocksAbi, GIGBLOCKS_ADDRESS } from '@/app/config'
 import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -16,7 +16,7 @@ export default function WalletButton({ registerSession }: Readonly<{ registerSes
 
   const result = useReadContract({
     abi: GigBlocksAbi,
-    address: WALLET_ADDRESS,
+    address: GIGBLOCKS_ADDRESS,
     functionName: 'isRegistered',
     args: [account.address]
   })

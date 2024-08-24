@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { config, GigBlocksAbi, WALLET_ADDRESS, BASE_URL } from "@/app/config";
+import { config, GigBlocksAbi, GIGBLOCKS_ADDRESS, BASE_URL } from "@/app/config";
 import { useRouter } from "next/navigation";
 import { TextField, Autocomplete, InputAdornment, OutlinedInput, InputLabel, FormControl, Button, CircularProgress } from "@mui/material"
 import { styled } from '@mui/material/styles';
@@ -126,7 +126,7 @@ export default function CreateProject() {
       let { data } = await axios.post(BASE_URL + "/jobs/uploadIpfs", jobDetails)
       console.log(data, 'data ipfs')
       writeContract({
-        address: WALLET_ADDRESS,
+        address: GIGBLOCKS_ADDRESS,
         abi: GigBlocksAbi,
         functionName: 'createJob',
         // args: [jobDetailIPFS.IpfsHash, [JobCategory.indexOf(category)]],

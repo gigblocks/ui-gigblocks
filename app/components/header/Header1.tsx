@@ -3,7 +3,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAccount, useReadContract } from 'wagmi';
-import { config, GigBlocksAbi, WALLET_ADDRESS } from '@/app/config';
+import { config, GigBlocksAbi, GIGBLOCKS_ADDRESS } from '@/app/config';
 import WalletButton from '../WalletButton';
 
 export default function Header1() {
@@ -13,7 +13,7 @@ export default function Header1() {
 
   const result = useReadContract({
     abi: GigBlocksAbi,
-    address: WALLET_ADDRESS,
+    address: GIGBLOCKS_ADDRESS,
     functionName: 'isRegistered',
     args: [address]
   });

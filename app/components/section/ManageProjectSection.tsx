@@ -7,7 +7,7 @@ import {
   useQuery,
 } from '@tanstack/react-query'
 import axios from 'axios'
-import { BASE_URL, GigBlocksAbi, WALLET_ADDRESS } from '@/app/config';
+import { BASE_URL, GigBlocksAbi, GIGBLOCKS_ADDRESS } from '@/app/config';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import { Tooltip, OutlinedInput, InputAdornment } from '@mui/material';
 import DatePickerComponent from '../DatePicker';
@@ -75,7 +75,7 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
   })
   const { data } = useReadContract({
     abi: GigBlocksAbi,
-    address: WALLET_ADDRESS,
+    address: GIGBLOCKS_ADDRESS,
     functionName: 'getJobApplicants',
     args: [projectId, 0, 100]
   })
@@ -95,7 +95,7 @@ const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, pro
   const triggerAssignFreelancer = () => {
     writeContract({
       abi: GigBlocksAbi,
-      address: WALLET_ADDRESS,
+      address: GIGBLOCKS_ADDRESS,
       functionName: 'assignFreelancer',
       args: [projectId, isShow, eth, form.deadline],
       value: eth,
@@ -171,7 +171,7 @@ export default function ManageProjectSection() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   const account = useAccount()
-  const {data: isClient} = useReadContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'isClient', args: [account.address] })
+  const {data: isClient} = useReadContract({ abi: GigBlocksAbi, address: GIGBLOCKS_ADDRESS, functionName: 'isClient', args: [account.address] })
   const { data: projectData, refetch } = useManageProjects(isClient, account.address, 10, status)
 
   useEffect(() => {
@@ -199,7 +199,7 @@ export default function ManageProjectSection() {
               <MessageSquare size={14} className="text-blue-600" />
             </Button>
             {!isClient ? <Button variant="outline" size="sm" className='ml-2' onClick={() => {
-              writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'completeJob', args: [project.id]})
+              writeContract({ abi: GigBlocksAbi, address: GIGBLOCKS_ADDRESS, functionName: 'completeJob', args: [project.id]})
             }}>
               <Check size={14} className="text-green-600" />
             </Button> : null}
@@ -211,7 +211,7 @@ export default function ManageProjectSection() {
             {isClient ? (
               <>
                 <Button variant="outline" size="sm" onClick={() => {
-                  writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'approveJob', args: [project.id]})
+                  writeContract({ abi: GigBlocksAbi, address: GIGBLOCKS_ADDRESS, functionName: 'approveJob', args: [project.id]})
                 }}>
                   <Check size={14} className="text-green-600" />
                   Approve
@@ -228,7 +228,7 @@ export default function ManageProjectSection() {
         return (
           <>
             {isClient == false && !project.isPaid ? <Button variant="outline" size="sm" className='ml-2' onClick={() => {
-              writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'claimPayment', args: [project.id]})
+              writeContract({ abi: GigBlocksAbi, address: GIGBLOCKS_ADDRESS, functionName: 'claimPayment', args: [project.id]})
             }}>
               <Check size={14} className="text-green-600 mr-2" /> Claim Payment
             </Button> : null}

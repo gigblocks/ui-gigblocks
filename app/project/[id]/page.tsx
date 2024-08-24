@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import DatePickerComponent from '@/app/components/DatePicker'
 import axios from 'axios'
 import { useWriteContract, useAccount } from "wagmi"
-import { BASE_URL, GigBlocksAbi, WALLET_ADDRESS } from '@/app/config'
+import { BASE_URL, GigBlocksAbi, GIGBLOCKS_ADDRESS } from '@/app/config'
 import { Button, TextField, OutlinedInput, InputAdornment } from '@mui/material'
 import moment from 'moment'
 import { MapPin, Calendar, Eye, MessageSquare, DollarSign, Clock, ThumbsUp, Languages, BarChart } from 'lucide-react'
@@ -89,7 +89,7 @@ export default function ProjectDetail() {
     
     writeContract({
       abi: GigBlocksAbi,
-      address: WALLET_ADDRESS,
+      address: GIGBLOCKS_ADDRESS,
       functionName: 'applyForJob',
       args
     })
