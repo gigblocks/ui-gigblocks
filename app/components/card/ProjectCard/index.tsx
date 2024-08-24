@@ -1,73 +1,96 @@
 import Image from "next/image";
 import Link from "next/link";
+import moment from "moment";
+import { MapPin, Clock, Users } from 'lucide-react';
 
-export default function ProjectCard3({ data, id }: Readonly<{ data: any, id: any }>) {
+interface PriceRange {
+  min: number;
+  max: number;
+}
+
+interface ProjectData {
+  applicantCount?: number;
+  jobPictureIPFS?: string;
+  title?: string;
+  clientLocation?: string;
+  description?: string;
+  skillsRequired?: string[];
+  priceRange?: PriceRange;
+  createdAt?: number;
+}
+
+interface ProjectCardProps {
+  data: ProjectData;
+  id: string | number;
+}
+
+export default function ProjectCard({ data, id }: ProjectCardProps) {
+  const {
+    applicantCount,
+    jobPictureIPFS,
+    title,
+    clientLocation,
+    description,
+    skillsRequired,
+    priceRange,
+    createdAt
+  } = data;
+
+  const timeAgo = createdAt ? moment(createdAt).fromNow() : "Unknown time";
 
   return (
-    <>
-      <div className="rounded-lg bg-white p-[30px]">
-        <div className="col-lg-8 ps-0 bdrr1 bdrn-xl">
-          <div className="grid grid-cols-12 gap-1">
-            <div className="left-section pr-[12px] col-span-9">
-              <div className="flex">
-                <div className="rounded-full mb-15">
-                  <Image
-                    height={60}
-                    width={60}
-                    className="rounded-circle mx-auto"
-                    src={data?.img || ''}
-                    alt="rounded-circle"
-                  />
-                </div>
-                <div>
-                  <h5 className="title mb-3">{data?.title}</h5>
-                  <div className="flex detail">
-                    <p className="mb-0 fz14 list-inline-item mb5-sm pe-1">
-                      <i className="flaticon-place fz16 vam text-thm2 me-1"></i>
-                      {data?.clientLocation}
-                    </p>
-                    <p  className="mb-0 fz14 list-inline-item mb5-sm pe-1">
-                      <i  className="flaticon-30-days fz16 vam text-thm2 me-1 bdrl1 pl15 pl0-xs bdrn-xs"></i>{" "}
-                      2 hours ago
-                    </p>
-                    <p  className="mb-0 fz14 list-inline-item mb5-sm">
-                      <i  className="flaticon-contract fz16 vam text-thm2 me-1 bdrl1 pl15 pl0-xs bdrn-xs"></i>{" "}
-                      1 Received
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="details ml15 ml0-md mb15-md">
-                <p className="text mt10">
-                  {data?.description
-                    ? data?.description
-                    : "Many desktop publishing packages and web page editors now use Lorem Ipsum  as their default model text."}{" "}
-                </p>
-              </div>
-              <div className="skill-tags d-flex align-items-center justify-content-start mb20-md">
-                {data?.skillRequired ? data?.skillsRequired?.map((item: any, i: number) => (
-                  <span key={i} className={`tag ${i === 1 ? "mx-10" : ""}`}>
-                    {item}
-                  </span>
-                )) : null}
-              </div>
-            </div>
-            <div  className="right-section details pl-6 border-l border-gray col-span-3">
-              <div  className="text-lg-end">
-                <h4>
-                  ${data?.priceRange?.min}- ${data?.priceRange?.max}
-                </h4>
-                <Link
-                  href={`/project/${id}`}
-                  className="border py-4 px-12 border-lime-500 text-lime-500 block"
-                >
-                  Apply Project
-                </Link>
+    <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+      <div className="flex flex-col md:flex-row justify-between items-start">
+        <div className="flex items-start space-x-6 flex-grow">
+          <div className="relative">
+            <Image
+              src={`${process.env.NEXT_PUBLIC_PINATA_GATEWAY}/ipfs/${jobPictureIPFS}` || '/default-avatar.png'}
+              alt="Client Avatar"
+              width={80}
+              height={80}
+              className="rounded-full border-4 border-gray-200"
+            />
+            <div className="absolute bottom-0 -right-1 bg-green-500 rounded-full p-1">
+              <div className="bg-white rounded-full p-1">
+                <div className="bg-green-500 rounded-full w-3 h-3"></div>
               </div>
             </div>
           </div>
+          <div>
+            <h3 className="font-bold text-2xl mb-3 text-gray-800">{title}</h3>
+            <div className="flex flex-wrap text-sm text-gray-600 mb-4 space-x-6">
+              <span className="flex items-center"><MapPin className="mr-2 text-red-500" size={16} />{clientLocation}</span>
+              <span className="flex items-center"><Clock className="mr-2 text-blue-500" size={16} />{timeAgo}</span>
+              <span className="flex items-center"><Users className="mr-2 text-purple-500" size={16} />{applicantCount ? `${applicantCount} applicants` : 'No applicants yet'}</span>
+            </div>
+            <p className="text-base text-gray-700 mb-5 leading-relaxed">
+              {description || "Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {skillsRequired && skillsRequired.length > 0 ? (
+                skillsRequired.map((skill, index) => (
+                  <span key={index} className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-gray-500">No skills specified</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="text-right mt-6 md:mt-0 ml-0 md:ml-6 flex flex-col items-end">
+          <h4 className="font-bold text-2xl text-green-600 mb-2">
+            ${priceRange?.min} - ${priceRange?.max}
+          </h4>
+          <p className="text-sm text-gray-500 mb-6">Price Range</p>
+          <Link href={`/project/${id}`} className="w-full">
+            <button className="w-full bg-gradient-to-r from-green-400 to-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-500 hover:to-blue-600 transition duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1">
+              Send Proposal
+            </button>
+          </Link>
         </div>
       </div>
-    </>
+    </div>
   );
 }
