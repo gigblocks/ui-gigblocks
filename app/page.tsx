@@ -25,7 +25,7 @@ export default function Home() {
   const { status, data, error, isFetching } = useProjects()
   console.log(data, 'woi data')
   let content = data ? data?.map((item:any,i:number) => (
-    <div key={ i } className="col-md-6 col-xl-12">
+    <div key={ i } className="w-full">
       <ProjectCard data={item.jobDetails} id={item.id} />
     </div>
   )) : "no data"
@@ -33,18 +33,19 @@ export default function Home() {
     <>
       <Header1 />
       <section className="pt-[120px] pb-90 px-16">
-        <div className="container">
+        <div className="container-fluid">
           <div className="flex">
-            <div className="filter w-[25%]">
+            <div className="filter w-1/4">
               <Filter />
             </div>
-            <div className="body ml-12">
+            <div className="body w-3/4 pl-12">
               <form className="search-section flex gap-2 mb-8">
                 <TextField id="standard-basic" label="search" variant="outlined" placeholder="search" fullWidth />
-                {/* <TextField id="standard-basic" label="Standard" variant="outlined" /> */}
                 <Button variant="outlined" className="px-12">Search</Button>
               </form>
-              {!data ? null : content}
+              <div className="w-full">
+                {!data ? null : content}
+              </div>
               <div className="flex justify-center">
                 <Pagination className="mt-12" count={10} variant="outlined" />
               </div>
