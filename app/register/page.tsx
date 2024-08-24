@@ -6,7 +6,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { Delete as DeleteIcon, Edit as EditIcon} from '@mui/icons-material'
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/navigation'
-import { useAccount, useWriteContract } from 'wagmi'
+import { useAccount, useWriteContract, useReadContract } from 'wagmi'
 import { waitForTransactionReceipt } from "@wagmi/core";
 import axios from 'axios'
 import { config, GigBlocksAbi, GIGBLOCKS_ADDRESS, BASE_URL } from "../config";
@@ -32,6 +32,9 @@ const VisuallyHiddenInput = styled('input')({
 
 export default function Register() {
   const router = useRouter()
+  const account = useAccount()
+  const { data: isRegistered } = useReadContract({ abi: GigBlocksAbi, address: GIGBLOCKS_ADDRESS, functionName: 'isRegistered', args: [account.address]})
+
   const { writeContractAsync, isError, isPending, isSuccess } = useWriteContract()
   const { isConnected, address } = useAccount()
   const [imgFile, setImgFile] = useState<any>(null)
@@ -203,169 +206,180 @@ export default function Register() {
         <h1 className="font-bold text-4xl text-white">Register</h1>
       </div>
       <div>
-      <div className="bg-white rounded-lg shadow-2xl mx-auto w-[50%] px-12 py-16 border-gray-100 border-1 border my-12">
-        <div className="mb-4">
-          <h4>Let's create your account!</h4>
-        </div>
-        <WalletButton registerSession={true} />
-        <FormControl className="mb-4 mt-6 flex">
-          <FormLabel id="demo-row-radio-buttons-group-label">Become a</FormLabel>
-          <RadioGroup
-            row
-            aria-labelledby="demo-row-radio-buttons-group-label"
-            name="row-radio-buttons-group"
-            value={flag}
-            onChange={(e) => setFlag(Number(e.target.value))}
-          >
-            <FormControlLabel disabled={!isConnected} value={1} control={<Radio />} label="Freelancer" />
-            <FormControlLabel disabled={!isConnected} value={2} control={<Radio />} label="Employer" />
-          </RadioGroup>
-        </FormControl>
-        {flag !== 0 && <>
+        <div className="bg-white rounded-lg shadow-2xl mx-auto w-[50%] px-12 py-16 border-gray-100 border-1 border my-12">
           <div className="mb-4">
-            <label className="form-label">
-              Username
-            </label>
-            <TextField
-              fullWidth
-              onChange={(e) => setForm({ ...form, username: e.target.value})}
-              type="text"
-              className="form-control block"
-              placeholder="username"
-            />
+            {isRegistered ? <h4>You had registered already</h4> : <h4>Let's create your account!</h4>}
           </div>
-          <div className="mb-4">
-            <label className="form-label">Email</label>
-            <TextField
-              onChange={(e) => setForm({ ...form, email: e.target.value})}
-              type="email"
-              fullWidth
-              className="form-control block"
-              placeholder="ur@email.com"
-            />
-          </div>
-          <label className="form-label">Country</label>
-          <Autocomplete
-            disablePortal
-            className="mb-4"
-            id="combo-box-demo"
-            options={countryList}
-            fullWidth
-            value={form.country}
-            onChange={(e, value) => setForm({ ...form, country: value })}
-            renderInput={(params) => <TextField {...params} />}
-          />
-          <label className="form-label">Preference</label>
-          <Autocomplete
-            disablePortal
-            id="combo-box-demo"
-            className="mb-4"
-            options={JobCategory}
-            fullWidth
-            value={form.preference}
-            onChange={(e, value) => setForm({ ...form, preference: value })}
-            renderInput={(params) => <TextField {...params} />}
-          />
-          {flag == 1 && <label className="form-label">Skills</label>}
-          {flag == 1 && <Autocomplete
-            multiple
-            id="skills"
-            options={skills}
-            onChange={(e, value) => setForm({...form, skills: value })}
-            getOptionLabel={(option) => option}
-            className="mb-4"
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                variant="outlined"
-                placeholder="Skills"
-              />
-            )}
-          />}
-          <div className="mb-4">
-            <label className="form-label">Description</label>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              onChange={(e) => setForm({ ...form, description: e.target.value})}
-              className="form-control block"
-              placeholder="Over 15 years in software development and project management..."
-            />
-          </div>
-
-          {flag == 1 && (
-            <>
-              <label className="form-label font-semibold mb-2 mt-6 text-xl text-gray-800">Education</label>
-              <hr style={{ marginTop: 4, marginBottom: 12 }} />
-              {openEducationForm ?
-                <FormComponent handleSubmit={handleSubmit} handleClose={handleSubmitClose} data={choosedData} /> :
-                <ListComponent list={form.education} handleEdit={handleEdit} handleDelete={handleDelete}/>
-              }
-              {!openEducationForm && (
-                <Divider>
-                  <div className="hover:font-semibold" onClick={() => setOpenEducationForm(true)} style={{ cursor: 'pointer' }}>
-                    Add new education
-                  </div>
-                </Divider>
-              )}
-              <label className="form-label font-semibold mb-2 mt-6 text-xl text-gray-800">Work Experience</label>
-              <hr style={{ marginTop: 2, marginBottom: 12 }} />
-              {openWorkForm ?
-                <FormComponent handleSubmit={handleSubmit} handleClose={handleSubmitClose} data={choosedData} type="work" /> :
-                <ListComponent list={form.workExperience} handleEdit={handleEdit} type="work" handleDelete={handleDelete}/>
-              }
-              {!openWorkForm && (
-                <Divider>
-                  <div className="hover:font-semibold" onClick={() => setOpenWorkForm(true)} style={{ cursor: 'pointer' }}>
-                    Add new work experience
-                  </div>
-                </Divider>
-              )}
-            </>
-          )}
-          {selectedImage ? (
-            <div className="relative mt-4 w-fit">
-                <img
-                    src={selectedImage}
-                    alt="Selected Preview"
-                    className="w-64 h-64 object-cover rounded-lg shadow-lg"
-                />
-                <button
-                    onClick={handleRemoveImage}
-                    className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full w-[30px] h-[30px]"
-                >
-                    X
-                </button>
-            </div>
-          ) : (
-            <div className="mt-4">
-              <Button
-                component="label"
-                role={undefined}
-                className="bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
-                variant="contained"
-                tabIndex={-1}
-                startIcon={<CloudUploadIcon />}
+          {isRegistered ? 
+            <Button
+              className="w-full bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
+              type="button"
+              onClick={() => router.push('/')}
+              variant="contained"
+            >
+              Back to home
+            </Button>
+          :<>
+            <WalletButton registerSession={true} />
+            <FormControl className="mb-4 mt-6 flex">
+              <FormLabel id="demo-row-radio-buttons-group-label">Become a</FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="demo-row-radio-buttons-group-label"
+                name="row-radio-buttons-group"
+                value={flag}
+                onChange={(e) => setFlag(Number(e.target.value))}
               >
-                Upload Image
-                <VisuallyHiddenInput type="file" accept="image/*" onChange={handleImageChange} />
+                <FormControlLabel disabled={!isConnected} value={1} control={<Radio />} label="Freelancer" />
+                <FormControlLabel disabled={!isConnected} value={2} control={<Radio />} label="Employer" />
+              </RadioGroup>
+            </FormControl>
+            {flag !== 0 && <>
+              <div className="mb-4">
+                <label className="form-label">
+                  Username
+                </label>
+                <TextField
+                  fullWidth
+                  onChange={(e) => setForm({ ...form, username: e.target.value})}
+                  type="text"
+                  className="form-control block"
+                  placeholder="username"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="form-label">Email</label>
+                <TextField
+                  onChange={(e) => setForm({ ...form, email: e.target.value})}
+                  type="email"
+                  fullWidth
+                  className="form-control block"
+                  placeholder="ur@email.com"
+                />
+              </div>
+              <label className="form-label">Country</label>
+              <Autocomplete
+                disablePortal
+                className="mb-4"
+                id="combo-box-demo"
+                options={countryList}
+                fullWidth
+                value={form.country}
+                onChange={(e, value) => setForm({ ...form, country: value })}
+                renderInput={(params) => <TextField {...params} />}
+              />
+              <label className="form-label">Preference</label>
+              <Autocomplete
+                disablePortal
+                id="combo-box-demo"
+                className="mb-4"
+                options={JobCategory}
+                fullWidth
+                value={form.preference}
+                onChange={(e, value) => setForm({ ...form, preference: value })}
+                renderInput={(params) => <TextField {...params} />}
+              />
+              {flag == 1 && <label className="form-label">Skills</label>}
+              {flag == 1 && <Autocomplete
+                multiple
+                id="skills"
+                options={skills}
+                onChange={(e, value) => setForm({...form, skills: value })}
+                getOptionLabel={(option) => option}
+                className="mb-4"
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    placeholder="Skills"
+                  />
+                )}
+              />}
+              <div className="mb-4">
+                <label className="form-label">Description</label>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  onChange={(e) => setForm({ ...form, description: e.target.value})}
+                  className="form-control block"
+                  placeholder="Over 15 years in software development and project management..."
+                />
+              </div>
+
+              {flag == 1 && (
+                <>
+                  <label className="form-label font-semibold mb-2 mt-6 text-xl text-gray-800">Education</label>
+                  <hr style={{ marginTop: 4, marginBottom: 12 }} />
+                  {openEducationForm ?
+                    <FormComponent handleSubmit={handleSubmit} handleClose={handleSubmitClose} data={choosedData} /> :
+                    <ListComponent list={form.education} handleEdit={handleEdit} handleDelete={handleDelete}/>
+                  }
+                  {!openEducationForm && (
+                    <Divider>
+                      <div className="hover:font-semibold" onClick={() => setOpenEducationForm(true)} style={{ cursor: 'pointer' }}>
+                        Add new education
+                      </div>
+                    </Divider>
+                  )}
+                  <label className="form-label font-semibold mb-2 mt-6 text-xl text-gray-800">Work Experience</label>
+                  <hr style={{ marginTop: 2, marginBottom: 12 }} />
+                  {openWorkForm ?
+                    <FormComponent handleSubmit={handleSubmit} handleClose={handleSubmitClose} data={choosedData} type="work" /> :
+                    <ListComponent list={form.workExperience} handleEdit={handleEdit} type="work" handleDelete={handleDelete}/>
+                  }
+                  {!openWorkForm && (
+                    <Divider>
+                      <div className="hover:font-semibold" onClick={() => setOpenWorkForm(true)} style={{ cursor: 'pointer' }}>
+                        Add new work experience
+                      </div>
+                    </Divider>
+                  )}
+                </>
+              )}
+              {selectedImage ? (
+                <div className="relative mt-4 w-fit">
+                    <img
+                        src={selectedImage}
+                        alt="Selected Preview"
+                        className="w-64 h-64 object-cover rounded-lg shadow-lg"
+                    />
+                    <button
+                        onClick={handleRemoveImage}
+                        className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full w-[30px] h-[30px]"
+                    >
+                        X
+                    </button>
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <Button
+                    component="label"
+                    role={undefined}
+                    className="bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
+                    variant="contained"
+                    tabIndex={-1}
+                    startIcon={<CloudUploadIcon />}
+                  >
+                    Upload Image
+                    <VisuallyHiddenInput type="file" accept="image/*" onChange={handleImageChange} />
+                  </Button>
+                </div>
+              )}
+            </>}
+            <div className="flex justify-center w-full mt-6">
+              <Button
+                className="w-full bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
+                type="button"
+                disabled={validate() || isLoading}
+                onClick={handleRegister}
+                variant="contained"
+              >
+                Create Account
               </Button>
             </div>
-          )}
-        </>}
-        <div className="flex justify-center w-full mt-6">
-          <Button
-            className="w-full bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
-            type="button"
-            disabled={validate() || isLoading}
-            onClick={handleRegister}
-            variant="contained"
-          >
-            Create Account
-          </Button>
+          </>}
         </div>
-      </div>
       </div>
     </section>
   )
