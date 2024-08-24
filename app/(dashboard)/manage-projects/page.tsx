@@ -1,3 +1,5 @@
+"use client"
+
 import Sidebar from "@/app/components/Sidebar"
 import ManageProjectSection from "@/app/components/section/ManageProjectSection"
 

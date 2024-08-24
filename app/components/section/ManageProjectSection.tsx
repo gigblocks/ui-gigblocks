@@ -1,15 +1,46 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin, Clock, FileText, Pencil, Trash, Users, MessageSquare, Check, RefreshCw, Edit, Trash2, ChevronLeft, ChevronRight, UserCheck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  useQuery,
+} from '@tanstack/react-query'
+import axios from 'axios'
+import { BASE_URL, GigBlocksAbi, WALLET_ADDRESS } from '@/app/config';
+import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { Tooltip, OutlinedInput, InputAdornment } from '@mui/material';
+import DatePickerComponent from '../DatePicker';
+import moment from 'moment';
+import BasicModal from '../Modal';
+import { parseGwei } from 'viem';
+import { writeContract } from 'viem/actions';
+
+function useManageProjects(isClient:any, walletAddress:string | undefined, limit = 10, status = 0, offset = 0) {
+  return useQuery({
+    queryKey: ['manageProjects'],
+    queryFn: async () => {
+      if (isClient) {
+        const response = await axios.get(BASE_URL+'/jobs/byClient/' + walletAddress + `?limit=${limit}&status=${status}&offset=${offset}`)
+        return response.data
+      } else {
+        const response = await axios.get(BASE_URL+'/jobs/byFreelancer/' + walletAddress + `?limit=${limit}&status=${status}&offset=${offset}`)
+        return response.data
+      }
+    },
+  })
+}
+
+function useGetETH() {
+  return useQuery({
+    queryKey: ['getETH'],
+    queryFn: async () => {
+      const response = await axios.get(`https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD`)
+      return response.data
+    },
+    staleTime: Infinity
+  })
+}
 
 const tabs = [
   "Open Projects",
@@ -17,57 +48,6 @@ const tabs = [
   "Completed Projects",
   "Approved Projects"
 ];
-
-const projectData = {
-  "Open Projects": [
-    {
-      title: "Food Delivery Mobile App",
-      company: "TechCorp",
-      applications: "3+ Applied",
-      createdExpired: "June 15, 2023 / August 30, 2023",
-      status: "Active",
-      color: "bg-green-500",
-    },
-    {
-      title: "E-commerce Website Redesign",
-      company: "WebSolutions",
-      applications: "5+ Applied",
-      createdExpired: "July 1, 2023 / September 15, 2023",
-      status: "Active",
-      color: "bg-blue-500",
-    }
-  ],
-  "Ongoing Projects": [
-    {
-      title: "Mobile Game Development",
-      location: "Tokyo, Japan",
-      time: "1 week ago",
-      receivedOffers: 2,
-      category: "Game Development",
-      cost: "$5000.00/Fixed"
-    }
-  ],
-  "Completed Projects": [
-    {
-      title: "Logo Design",
-      location: "Berlin, Germany",
-      time: "2 months ago",
-      receivedOffers: 7,
-      category: "Graphic Design",
-      cost: "$300.00/Fixed"
-    }
-  ],
-  "Approved Projects": [
-    {
-      title: "AI Chatbot Integration",
-      location: "San Francisco, USA",
-      time: "4 weeks ago",
-      receivedOffers: 0,
-      category: "Artificial Intelligence",
-      cost: "$100.00/Hour"
-    }
-  ]
-};
 
 const getStatusStyle = (status: string): string => {
   const baseStyle = "px-2 py-1 text-xs font-medium rounded-full inline-block text-center";
@@ -85,59 +65,123 @@ const IconPlaceholder: React.FC<{ color: string }> = ({ color }) => (
   </div>
 );
 
-const ApplicantsModal = ({ projectTitle }: { projectTitle: string }) => {
-  const applicants = [
-    { id: 1, name: "John Doe", email: "john@example.com" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com" },
-    { id: 3, name: "Bob Johnson", email: "bob@example.com" },
-  ];
+const ApplicantsModal = ({ projectTitle, projectId}: { projectTitle: string, projectId: number }) => {
+  const { data: ethData } = useGetETH()
+  const [open, setOpen] = useState(false)
+  const [isShow, setShow] = useState<string>('')
+  const [form, setForm] = useState({
+    payableAmmount: '',
+    deadline: 0
+  })
+  const { data } = useReadContract({
+    abi: GigBlocksAbi,
+    address: WALLET_ADDRESS,
+    functionName: 'getJobApplicants',
+    args: [projectId, 0, 100]
+  })
+  const applicants:any = data;
+
+  const {
+    error,
+    isPending, 
+    isSuccess,
+    writeContract 
+  } = useWriteContract()
+  const ethPrice = ethData?.USD ?  (Number(form.payableAmmount) / ethData.USD).toFixed(6) : 0;
+  const wei = parseGwei(`${ethPrice}`);
+  const triggerAssignFreelancer = () => {
+    writeContract({
+      abi: GigBlocksAbi,
+      address: WALLET_ADDRESS,
+      functionName: 'assignFreelancer',
+      args: [projectId, isShow, wei, form.deadline],
+      value: wei,
+    })
+    setOpen(false)
+  }
+
+  
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="mr-2">
-          <Users className="mr-2 h-4 w-4" />
-          Applicants
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Applicants for {projectTitle}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Button variant="outline" size="sm" className="mr-2" onClick={() => setOpen(true)}>
+        <Users className="mr-2 h-4 w-4" />
+        Applicants
+      </Button>
+      <BasicModal isOpen={open} handleClose={() => setOpen(false)} width={600}>
         <div className="grid gap-4 py-4">
-          {applicants.map((applicant) => (
-            <div key={applicant.id} className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{applicant.name}</p>
-                <p className="text-sm text-gray-500">{applicant.email}</p>
+          {projectTitle}
+          {applicants?.length ? applicants?.map((applicant: any, i:number) => (
+            <>
+              <div key={applicant.id} className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{applicant.freelancerName}</p>
+                  <p className="text-sm text-gray-500">{applicant.freelancerEmail}</p>
+                </div>
+                <div className="flex space-x-2">
+                  <Tooltip title="assign freelancer">
+                    <Button onClick={() => setShow(applicant.freelancerWalletAddress)} size="sm" variant="outline">
+                      <UserCheck className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
+                  <Button size="sm" variant="outline">
+                    <MessageSquare className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex space-x-2">
-                <Button size="sm" variant="outline">
-                  <UserCheck className="h-4 w-4" />
-                </Button>
-                <Button size="sm" variant="outline">
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+              {isShow === applicant.freelancerWalletAddress && (
+                <>
+                  <div className='border-b border-gray-500 pb-4 items-center'>
+                    <div className='flex gap-4'>
+                      <OutlinedInput
+                        className='w-1/2'
+                        placeholder='payable ammount'
+                        startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                        onChange={(e) => setForm({ ...form, payableAmmount: e.target.value})}
+                      />
+                      <DatePickerComponent isYearOnly={false} onChange={(val:any) => setForm({ ...form, deadline: moment(val).valueOf() })} />
+                    </div>
+                    <div className='flex justify-end w-full mt-4'>
+                      <Button onClick={() => triggerAssignFreelancer()} className='px-10'>Submit</Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )) : null}
         </div>
-      </DialogContent>
-    </Dialog>
+      </BasicModal>
+    </>
   );
 };
 
 export default function ManageProjectSection() {
+  const {
+    error,
+    isPending, 
+    isSuccess,
+    writeContract 
+  } = useWriteContract()
+
   const [activeTab, setActiveTab] = useState("Open Projects");
+  const [status, setStatus] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const account = useAccount()
+  const {data: isClient} = useReadContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'isClient', args: [account.address] })
+  console.log(isClient, 'woiiii')
+  const { data: projectData, refetch } = useManageProjects(isClient, account.address, 10, status)
+  console.log(projectData, 'oioioioi')
+  useEffect(() => {
+    refetch()
+  }, [status, isSuccess])
 
   const renderActionButtons = (tab: string, project: any) => {
     switch (tab) {
       case "Open Projects":
         return (
           <div className="flex space-x-2">
-            <ApplicantsModal projectTitle={project.title} />
+            <ApplicantsModal projectTitle={project.title} projectId={project.id} />
             <button className="text-blue-600 hover:text-blue-900">
               <Edit size={18} />
             </button>
@@ -148,14 +192,23 @@ export default function ManageProjectSection() {
         );
       case "Ongoing Projects":
         return (
-          <Button variant="outline" size="sm">
-            <MessageSquare size={14} className="text-blue-600" />
-          </Button>
+          <>
+            <Button variant="outline" size="sm">
+              <MessageSquare size={14} className="text-blue-600" />
+            </Button>
+            <Button variant="outline" size="sm" className='ml-2' onClick={() => {
+              writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'completeJob', args: [project.id]})
+            }}>
+              <Check size={14} className="text-green-600" />
+            </Button>
+          </>
         );
       case "Completed Projects":
         return (
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => {
+              writeContract({ abi: GigBlocksAbi, address: WALLET_ADDRESS, functionName: 'approveJob', args: [project.id]})
+            }}>
               <Check size={14} className="text-green-600" />
               Approve
             </Button>
@@ -172,13 +225,6 @@ export default function ManageProjectSection() {
     }
   };
 
-  const paginatedProjects = projectData[activeTab as keyof typeof projectData].slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(projectData[activeTab as keyof typeof projectData].length / itemsPerPage);
-
   const Pagination = () => (
     <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
       <div className="flex flex-1 justify-between sm:hidden">
@@ -189,7 +235,7 @@ export default function ManageProjectSection() {
           Previous
         </button>
         <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          // onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           Next
@@ -198,7 +244,6 @@ export default function ManageProjectSection() {
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-gray-700">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, projectData[activeTab as keyof typeof projectData].length)} of {projectData[activeTab as keyof typeof projectData].length} results
           </p>
         </div>
         <div>
@@ -210,21 +255,7 @@ export default function ManageProjectSection() {
               <span className="sr-only">Previous</span>
               <ChevronLeft className="h-5 w-5" aria-hidden="true" />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                  page === currentPage
-                    ? "z-10 bg-green-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
-                    : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
             <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
             >
               <span className="sr-only">Next</span>
@@ -240,7 +271,7 @@ export default function ManageProjectSection() {
     <section className="p-3">
       <div className="mb-6">
         <nav className="flex space-x-1 border-b border-gray-200">
-          {tabs.map((tab) => (
+          {tabs.map((tab,i) => (
             <button
               key={tab}
               className={`px-4 py-2 text-sm font-medium ${
@@ -248,7 +279,10 @@ export default function ManageProjectSection() {
                   ? 'text-blue-600 border-b-2 border-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                setActiveTab(tab)
+                setStatus(i)
+              }}
             >
               {tab}
             </button>
@@ -274,16 +308,12 @@ export default function ManageProjectSection() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {paginatedProjects.map((project, index) => (
+            {projectData?.length ? projectData.map((project:any, index:any) => (
               <tr key={index}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <IconPlaceholder color={('color' in project ? project.color : "bg-gray-500")} />
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{project.title}</div>
-                      <div className="text-sm text-gray-500">
-                        {'company' in project ? project.company : project.cost}
-                      </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{project.jobDetails.title}</div>
                     </div>
                   </div>
                 </td>
@@ -316,7 +346,7 @@ export default function ManageProjectSection() {
                   {renderActionButtons(activeTab, project)}
                 </td>
               </tr>
-            ))}
+            )) : <>no data</>}
           </tbody>
         </table>
         <Pagination />
