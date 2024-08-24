@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import queryString from "query-string";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -19,11 +19,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Header1 from "@/app/components/header/Header1";
 import SimpleRating from "@/app/components/rating/index";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { GigBlocksAbi, GIGBLOCKS_ADDRESS } from "@/app/config";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { BASE_URL } from "@/app/config";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 function useProfile(address: string) {
   return useQuery({
@@ -37,18 +38,30 @@ function useProfile(address: string) {
   });
 }
 
-export default function Page() {
-  const [connectedPlatforms, setConnectedPlatforms] = useState({
-    github: false,
-    linkedin: false,
-    twitter: false,
+function useReputation(address: string) {
+  return useQuery({
+    queryKey: ["reputation", address],
+    queryFn: async () => {
+      if (!address) return null;
+      const response = await axios.get(`${BASE_URL}/profiles/reputation/${address}`);
+      return response.data;
+    },
+    enabled: !!address,
   });
+}
+
+export default function Page() {
   const [canClaimENS, setCanClaimENS] = useState(true);
   const [countdown, setCountdown] = useState(0);
   const [isClaimingENS, setIsClaimingENS] = useState(false);
-  const [isEnsVerified, setIsEnsVerified] = useState(
-    localStorage.getItem("is_ens_verified") === "true"
-  );
+  const [isEnsVerified, setIsEnsVerified] = useState(false);
+  const [showENSModal, setShowENSModal] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsEnsVerified(localStorage.getItem("is_ens_verified") === "true");
+    }
+  }, []);
 
   const { address, isConnected } = useAccount();
   const router = useRouter();
@@ -63,7 +76,25 @@ export default function Page() {
     args: [address],
   });
 
+  const { data: reputationScore } = useReadContract({
+    abi: GigBlocksAbi,
+    address: GIGBLOCKS_ADDRESS,
+    functionName: "getReputationScore",
+    args: [address],
+  });
+
   const { data: profileData } = useProfile(address as string);
+  const { data: reputationData } = useReputation(address as string);
+  console.info(profileData);
+  console.info(reputationData);
+
+  const { writeContract } = useWriteContract();
+
+  const connectedPlatforms = {
+    github: !!(reputationData?.socialMediaFlags & 1),
+    linkedin: !!(reputationData?.socialMediaFlags & 2),
+    twitter: !!(reputationData?.socialMediaFlags & 4),
+  };
 
   useEffect(() => {
     if (!isConnected) {
@@ -74,10 +105,10 @@ export default function Page() {
   }, [isConnected, result.data, router]);
 
   useEffect(() => {
-    if (code && platform) {
-      setConnectedPlatforms((prev) => ({ ...prev, [platform]: true }));
+    if (isEnsVerified && reputationData && !reputationData.hasEns) {
+      setShowENSModal(true);
     }
-  }, [code, platform]);
+  }, [isEnsVerified, reputationData]);
 
   const paramsGithub = queryString.stringify({
     client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
@@ -92,6 +123,37 @@ export default function Page() {
 
   const twitterLoginUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_TWITTER_REDIRECT}&scope=tweet.read%20users.read%20follows.read%20follows.write&state=state&code_challenge=challenge&code_challenge_method=plain`;
 
+  async function connectPlatform(platform: string) {
+    try {
+      const response = await axios.post(`${BASE_URL}/auth/${platform}`, {
+        code: code,
+        walletAddress: address
+      });
+      const { messageHash, signature } = response.data;
+
+      writeContract({
+        address: GIGBLOCKS_ADDRESS,
+        abi: GigBlocksAbi,
+        functionName: 'connectSocialMedia',
+        args: [platform, signature],
+      });
+
+      const url = new URL(window.location.href);
+      url.search = '';
+      window.history.replaceState({}, '', url);
+      router.refresh();
+    } catch (error) {
+      console.error("Error connecting platform:", error);
+      alert("Failed to connect platform. Please try again.");
+    }
+  }
+
+  useEffect(() => {
+    if (platform && code) {
+      connectPlatform(platform);
+    }
+  }, [platform, code]);
+
   if (!isConnected || result.data === false) {
     return null;
   }
@@ -101,7 +163,7 @@ export default function Page() {
       const lastClaimTime = localStorage.getItem("lastENSClaimTime");
       if (lastClaimTime) {
         const timeSinceClaim = Date.now() - parseInt(lastClaimTime);
-        const cooldownPeriod = 60000; // 30 seconds
+        const cooldownPeriod = 60000;
         if (timeSinceClaim < cooldownPeriod) {
           setCanClaimENS(false);
           setCountdown(Math.ceil((cooldownPeriod - timeSinceClaim) / 1000));
@@ -128,8 +190,6 @@ export default function Page() {
 
     try {
       const username = localStorage.getItem("username");
-      console.log(username);
-      console.log(address);
       const response = await axios.post(`${BASE_URL}/ens/createSubEns`, {
         subdomain: username,
         givenSubdomainAddress: address,
@@ -142,32 +202,21 @@ export default function Page() {
       }
     );
       if (response.status === 200) {
-        console.log("ENS claimed successfully");
-        // Update states and localStorage
         setIsEnsVerified(true);
         localStorage.setItem("is_ens_verified", "true");
 
-        // Optionally, update other related states or trigger a profile refetch
-        // For example, if you have a function to refetch profile data:
-        // refetchProfileData();
-
-        // You might also want to update the displayed username if it changes with ENS
         const ensName = `${username}.gigblocks.eth`;
+      
         window.location.reload();
-        // If you have a state for displaying the username, update it here
-        // setDisplayName(ensName);
-
-        // Show a success message to the user
         alert("ENS claimed successfully! Your new ENS name is " + ensName);
       } else {
-        console.error("Failed to claim ENS");
         alert("Failed to claim ENS. Please try again later.");
       }
     } catch (error) {
-      console.error("Error claiming ENS:", error);
       alert("An error occurred while claiming ENS. Please try again later.");
     } finally {
       setIsClaimingENS(false);
+      setShowENSModal(false);
     }
   };
 
@@ -176,8 +225,51 @@ export default function Page() {
     ? new Date(profileData.registrationDate * 1000)
     : null;
 
+  useEffect(() => {
+    if (isEnsVerified && reputationData && !reputationData.hasEns) {
+      setShowENSModal(true);
+    }
+  }, [isEnsVerified, reputationData]);
+
+  // function ensModal() {
+  //   return (
+  //     <Dialog open={showENSModal} onOpenChange={setShowENSModal}>
+  //       <DialogContent className="bg-gradient-to-br from-indigo-100 to-purple-100 p-6 rounded-lg shadow-xl">
+  //         <DialogHeader className="space-y-4">
+  //           <DialogTitle className="text-3xl font-bold text-indigo-800 text-center">
+  //             Elevate Your Reputation!
+  //           </DialogTitle>
+  //           <DialogDescription className="text-lg text-gray-700 text-center">
+  //             <p className="mb-4">
+  //               Claim your ENS now and watch your reputation soar by up to <span className="font-semibold text-purple-600">50 points</span>!
+  //             </p>
+  //             <p className="italic">
+  //               Don't let this chance to enhance your profile slip away.
+  //             </p>
+  //           </DialogDescription>
+  //         </DialogHeader>
+  //         <div className="mt-6 flex justify-center">
+  //           <Button
+  //             onClick={() => writeContract({
+  //               address: GIGBLOCKS_ADDRESS,
+  //               abi: GigBlocksAbi,
+  //               functionName: 'claimENS',
+  //               args: [address],
+  //             })}
+  //             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105"
+  //           >
+  //             Claim Your ENS Now
+  //           </Button>
+  //         </div>
+  //       </DialogContent>
+  //     </Dialog>
+  //   );
+  // }
+  
+
   return (
     <>
+      {/* {showENSModal && ensModal()} */}
       <Header1 />
       <main className="container mx-auto px-4 pt-[120px] pb-10">
         <div className="max-w-7xl mx-auto">
@@ -227,11 +319,9 @@ export default function Page() {
                     ? `Wait ${countdown}s`
                     : "Claim ENS"}
                 </Button>
+                <a href={githubLoginUrl} rel="noopener noreferrer">
                 <Button
-                  onClick={() =>
-                    !connectedPlatforms.github &&
-                    (window.location.href = githubLoginUrl)
-                  }
+                  onClick={() => !connectedPlatforms.github && connectPlatform('github')}
                   className={`${
                     connectedPlatforms.github
                       ? "opacity-70 cursor-not-allowed"
@@ -249,11 +339,9 @@ export default function Page() {
                     "GitHub"
                   )}
                 </Button>
-                <Button
-                  onClick={() =>
-                    !connectedPlatforms.linkedin &&
-                    (window.location.href = linkedinLoginUrl)
-                  }
+                </a>
+                <a href={linkedinLoginUrl} rel="noopener noreferrer">
+                  <Button
                   className={`${
                     connectedPlatforms.linkedin
                       ? "opacity-70 cursor-not-allowed"
@@ -271,11 +359,9 @@ export default function Page() {
                     "LinkedIn"
                   )}
                 </Button>
+                </a>
+                <a href={twitterLoginUrl} rel="noopener noreferrer">
                 <Button
-                  onClick={() =>
-                    !connectedPlatforms.twitter &&
-                    (window.location.href = twitterLoginUrl)
-                  }
                   className={`${
                     connectedPlatforms.twitter
                       ? "opacity-70 cursor-not-allowed"
@@ -293,6 +379,7 @@ export default function Page() {
                     "Twitter"
                   )}
                 </Button>
+                </a>
               </div>
             </CardContent>
           </Card>
@@ -303,15 +390,15 @@ export default function Page() {
                 icon: UserCheck,
                 bg: "bg-green-100",
                 color: "text-green-600",
-                value: `${profileData?.totalRating || 0}%`,
-                label: "Job Success",
+                value: `${reputationScore || 0}%`,
+                label: "Total Reputation Score",
               },
               {
                 icon: MessageSquare,
                 bg: "bg-blue-100",
                 color: "text-blue-600",
-                value: profileData?.ratingCount || 0,
-                label: "Total Jobs",
+                value:  reputationData?.completedProjects || 0,
+                label: "Completed Projects",
               },
               {
                 icon: MessageSquare,
@@ -357,7 +444,7 @@ export default function Page() {
                 </CardContent>
               </Card>
 
-              {profileDetail.flags === 3 && (
+              {profileData.flags === 3 && (
                 <>
                   <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
                     <CardHeader>
