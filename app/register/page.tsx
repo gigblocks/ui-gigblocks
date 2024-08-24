@@ -1,8 +1,9 @@
 "use client"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import WalletButton from "../components/WalletButton"
-import { Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, Button, Autocomplete, Divider, TextField } from '@mui/material'
+import { Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, Button, Autocomplete, Divider, TextField, Tooltip, IconButton } from '@mui/material'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { Delete as DeleteIcon, Edit as EditIcon} from '@mui/icons-material'
 import { styled } from '@mui/material/styles';
 import { useRouter } from 'next/navigation'
 import { useAccount, useWriteContract } from 'wagmi'
@@ -43,6 +44,13 @@ export default function Register() {
     education: [],
     workExperience: [],
     skills: []
+  })
+  const [choosedData, setChoosedData] = useState<any>({
+    startDate: null,
+    endDate: null,
+    degreeName: '',
+    schoolName: '',
+    description: ''
   })
   
   const [openEducationForm, setOpenEducationForm] = useState<boolean>(true)
@@ -113,7 +121,7 @@ export default function Register() {
       })
       toast.success("Register successfully")
       setTimeout(() => {
-        router.push('/profile')
+        router.push('/my-profile')
       }, 1000)
     } catch (err) {
       console.log(err)
@@ -138,6 +146,13 @@ export default function Register() {
       setForm({ ...form, workExperience: [...form.workExperience, newData ]})
       setOpenWorkForm(false)
     }
+    setChoosedData({
+      startDate: 0,
+      endDate: 0,
+      degreeName: '',
+      schoolName: '',
+      description: ''
+    })
   }
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,6 +167,32 @@ export default function Register() {
     }
   };
 
+  const handleSubmitClose = (type:string, data:any) => {
+    if (type === 'education') {
+      setOpenEducationForm(false)
+    } else {
+      setOpenWorkForm(false)
+    }
+  }
+
+  const handleEdit = (type:string, data:any) => {
+    if (type === 'education') {
+      setOpenEducationForm(true)
+    } else {
+      setOpenWorkForm(true)
+    }
+    setChoosedData(data)
+  }
+
+  const handleDelete = (type:string, index:number) => {
+    if (type === 'education') {
+      const education = form.education.filter((_:any, i:number) => i !== index)
+      setForm({...form, education })
+    } else {
+      const workExperience = form.workExperience.filter((_:any, i:number) => i !== index)
+      setForm({ ...form, workExperience })
+    }
+  }
   return (
     <section className="bg-green-500 py-12 h-full">
       <div className="main-title text-center pt-8">
@@ -254,12 +295,12 @@ export default function Register() {
               <label className="form-label font-semibold mb-2 mt-6 text-xl text-gray-800">Education</label>
               <hr style={{ marginTop: 4, marginBottom: 12 }} />
               {openEducationForm ?
-                <FormComponent handleSubmit={handleSubmit} /> :
-                <ListComponent list={form.education} />
+                <FormComponent handleSubmit={handleSubmit} handleClose={handleSubmitClose} data={choosedData} /> :
+                <ListComponent list={form.education} handleEdit={handleEdit} handleDelete={handleDelete}/>
               }
               {!openEducationForm && (
                 <Divider>
-                  <div className="hover-black" onClick={() => setOpenEducationForm(true)} style={{ cursor: 'pointer' }}>
+                  <div className="hover:font-semibold" onClick={() => setOpenEducationForm(true)} style={{ cursor: 'pointer' }}>
                     Add new education
                   </div>
                 </Divider>
@@ -267,12 +308,12 @@ export default function Register() {
               <label className="form-label font-semibold mb-2 mt-6 text-xl text-gray-800">Work Experience</label>
               <hr style={{ marginTop: 2, marginBottom: 12 }} />
               {openWorkForm ?
-                <FormComponent handleSubmit={handleSubmit} type="work" /> :
-                <ListComponent list={form.workExperience} />
+                <FormComponent handleSubmit={handleSubmit} handleClose={handleSubmitClose} data={choosedData} type="work" /> :
+                <ListComponent list={form.workExperience} handleEdit={handleEdit} type="work" handleDelete={handleDelete}/>
               }
               {!openWorkForm && (
                 <Divider>
-                  <div className="hover-black" onClick={() => setOpenWorkForm(true)} style={{ cursor: 'pointer' }}>
+                  <div className="hover:font-semibold" onClick={() => setOpenWorkForm(true)} style={{ cursor: 'pointer' }}>
                     Add new work experience
                   </div>
                 </Divider>
@@ -280,7 +321,7 @@ export default function Register() {
             </>
           )}
           {selectedImage ? (
-            <div className="relative mt-4">
+            <div className="relative mt-4 w-fit">
                 <img
                     src={selectedImage}
                     alt="Selected Preview"
@@ -288,7 +329,7 @@ export default function Register() {
                 />
                 <button
                     onClick={handleRemoveImage}
-                    className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full"
+                    className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full w-[30px] h-[30px]"
                 >
                     X
                 </button>
@@ -298,6 +339,7 @@ export default function Register() {
               <Button
                 component="label"
                 role={undefined}
+                className="bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
                 variant="contained"
                 tabIndex={-1}
                 startIcon={<CloudUploadIcon />}
@@ -310,13 +352,13 @@ export default function Register() {
         </>}
         <div className="flex justify-center w-full mt-6">
           <Button
-            className="w-full"
+            className="w-full bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
             type="button"
             disabled={validate()}
             onClick={handleRegister}
-            variant="outlined"
+            variant="contained"
           >
-            Create Account <i className="fal fa-arrow-right-long" />
+            Create Account
           </Button>
         </div>
       </div>
@@ -325,14 +367,20 @@ export default function Register() {
   )
 }
 
-const FormComponent = ({ handleSubmit, type = 'education' }: Readonly<any>) => {
-  const [eduForm, setEduForm] = useState({
-    startDate: 0,
-    endDate: 0,
+const FormComponent = ({ handleSubmit, type = 'education', handleClose, data }: Readonly<any>) => {
+  const [eduForm, setEduForm] = useState(data ? data : {
+    startDate: null,
+    endDate: null,
     degreeName: '',
     schoolName: '',
     description: ''
   })
+
+  // useEffect(() => {
+  //   if (data.startDate) {
+  //     setEduForm(data)
+  //   }
+  // }, [data])
 
   const validation = () => {
     const { startDate, endDate, degreeName, schoolName, description } = eduForm;
@@ -361,6 +409,7 @@ const FormComponent = ({ handleSubmit, type = 'education' }: Readonly<any>) => {
           onChange={(e) => setEduForm({...eduForm, degreeName: e.target.value})}
           fullWidth sx={{ display: 'block' }}
           placeholder={type === 'education' ? 'Degree name' : 'Role'}
+          value={eduForm.degreeName}
         />
       </div>
       <div className="mb-4">
@@ -369,6 +418,7 @@ const FormComponent = ({ handleSubmit, type = 'education' }: Readonly<any>) => {
           onChange={(e) => setEduForm({...eduForm, schoolName: e.target.value})}
           fullWidth sx={{ display: 'block' }}
           placeholder={type === 'education' ? 'School name' : 'Company name'}
+          value={eduForm.schoolName}
         />
       </div>
       <div className="mb-4">
@@ -381,9 +431,15 @@ const FormComponent = ({ handleSubmit, type = 'education' }: Readonly<any>) => {
           fullWidth
           placeholder={type === 'education' ? 'Education description' : 'Work description'}
           variant="outlined"
+          value={eduForm.description}
         />
       </div>
       <div className="flex justify-end mb-4">
+        <Button
+          className="px-6 py-2 mr-4"
+          variant="contained" color="error" onClick={() => handleClose(type)}>
+          Cancel
+        </Button>
         <Button
           className="px-6 py-2 bg-green-500 text-white font-medium shadow-lg shadow-green-500/50 hover:shadow-lg hover:bg-green-700 hover:shadow-green-700/50"
           variant="contained" color="success" onClick={() => handleSubmit(type, eduForm )} disabled={validation()}>
@@ -394,31 +450,29 @@ const FormComponent = ({ handleSubmit, type = 'education' }: Readonly<any>) => {
   )
 }
 
-const ListComponent = ({ list = [], }) => {
+const ListComponent = ({ list = [], type = 'education', handleEdit, handleDelete }: Readonly<any>) => {
   return (
     <div className="educational-quality">
-      {list.map((data: any, i) => (
+      {list.map((data: any, i:number) => (
         <div key={i}>
           <div className="wrapper mb40 position-relative">
             <div className="del-edit">
-              <div className="d-flex">
-                <a className="icon me-2" id="edit">
-                  {/* <Tooltip title="Edit" className="ui-tooltip">
-                    Edit
-                  </Tooltip> */}
-                  <span className="flaticon-pencil" />
-                </a>
-                <a className="icon" id="delete">
-                  {/* <Tooltip title="Delete" anchorSelect="#delete" className="ui-tooltip">
-                    Delete
-                  </Tooltip> */}
-                  <span className="flaticon-delete" />
-                </a>
+              <div className="flex">
+                <Tooltip title="Edit">
+                  <IconButton onClick={() => handleEdit(type, data)}>
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete">
+                <IconButton onClick={() => handleDelete(type, i)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
               </div>
             </div>
             <span className="tag">{data.startDate} - {data.endDate}</span>
-            <h5 className="mt15">{data.degreeName}</h5>
-            <h6 className="text-thm">{data.schoolName}</h6>
+            <h5 className="mt15">{type === 'education' ? 'Degree name : ' : 'Role : '}{type === 'education' ? data.degreeName : data.roleName}</h5>
+            <h6 className="text-thm">{type === 'education' ? 'School name : ' : 'Company name : '}{type === 'education' ? data.schoolName : data.companyName}</h6>
             <p>
               {data.description}
             </p>
