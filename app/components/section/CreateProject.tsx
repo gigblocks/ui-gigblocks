@@ -7,7 +7,10 @@ import { styled } from '@mui/material/styles';
 import { JobCategory } from "@/app/data/jobCategory"
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useAccount, useWriteContract } from "wagmi";
+import { waitForTransactionReceipt } from "@wagmi/core";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { Address } from "viem";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -25,22 +28,13 @@ export default function CreateProject() {
   const account = useAccount()
   const router = useRouter()
   const { 
-    data,
-    error,
-    isPending, 
-    isSuccess,
-    writeContract 
+    writeContractAsync 
   } = useWriteContract()
   
   const dummyTag = [
     'Figma', 'Adobe-xd', 'CSS', 'HTML', 'Boostrap', 'Solidity', 'Javascript', 'Typescript', 'AWS'
   ]
 
-  useEffect(() => {
-    if (isSuccess) {
-      router.push('/manage-projects')
-    }
-  }, [isSuccess])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [form, setForm] = useState<any>({
     title: '',
@@ -84,6 +78,7 @@ export default function CreateProject() {
 
   const triggerCreateJob = async () => {
     try {
+      toast.loading("Finishing your mutation...");
       let responseProfile = await axios.get(BASE_URL + '/profiles/' + account.address)
       const profileData = responseProfile.data;
       const formData1 = new FormData();
@@ -100,8 +95,6 @@ export default function CreateProject() {
       let proposalIPFS = proposal.data.IpfsHash;
 
       console.log(jobPictureIPFS, 'woi')
-      // console.log(jobPictureIPFS)
-      // console.log(proposalIPFS, 'oi')
       let jobDetails = {
         jobPictureIPFS, //harus bentuk file
         proposalIPFS, //harus bentuk file
@@ -120,24 +113,40 @@ export default function CreateProject() {
         detailClient: profileData.profileDetail,
         applicants: [],
       };
-
-    //   console.log(jobDetails, 'anjay')
-    //   // let { data } = await axios.post("https://backend-gigblocks-production.up.railway.app/jobs/uploadIpfs", jobDetails)
       let { data } = await axios.post(BASE_URL + "/jobs/uploadIpfs", jobDetails)
-      console.log(data, 'data ipfs')
-      writeContract({
+
+      const result = await writeContractAsync({
         address: GIGBLOCKS_ADDRESS,
         abi: GigBlocksAbi,
         functionName: 'createJob',
-        // args: [jobDetailIPFS.IpfsHash, [JobCategory.indexOf(category)]],
         args: [data.IpfsHash, [jobDetails.category]],
+      },
+      {
+        onSuccess: () => {
+          toast.dismiss();
+          toast.loading("Creating Project...");
+        },
+        onError: () => {
+          toast.dismiss();
+          toast.error("Failed to create job");
+        },
       })
+      await waitForTransactionReceipt(config, {
+        hash: result as Address
+      })
+      toast.dismiss();
+      toast.success('Create job successfully')
+      setTimeout(() => {
+        router.push('/manage-projects')
+      }, 4000)
     } catch (err) {
-      console.log(err, 'ERR')
+      console.log(err)
+      toast.dismiss();
+      toast.error("Failed to create job");
     }
 
   }
-  console.log(form)
+
   return (
     <section className="p-8">
       <div className="pb-4 border-b border-gray-300 mb-4">
