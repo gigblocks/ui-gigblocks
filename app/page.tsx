@@ -5,11 +5,10 @@ import Header1 from "./components/header/Header1";
 import ProjectCard from "./components/card/ProjectCard";
 import { Pagination, TextField, Button } from '@mui/material'
 import Filter from "./components/Filter";
-import {
-  useQuery,
-} from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { BASE_URL } from "./config";
+import { Search } from 'lucide-react';
 
 function useProjects() {
   return useQuery({
@@ -23,7 +22,6 @@ function useProjects() {
 
 export default function Home() {
   const { status, data, error, isFetching } = useProjects()
-  console.log(data, 'woi data')
   let content = data ? data?.map((item:any,i:number) => (
     <div key={ i } className="w-full">
       <ProjectCard data={item.jobDetails} id={item.id} />
@@ -39,9 +37,34 @@ export default function Home() {
               <Filter />
             </div>
             <div className="body w-3/4 pl-12">
-              <form className="search-section flex gap-2 mb-8">
-                <TextField id="standard-basic" label="search" variant="outlined" placeholder="search" fullWidth />
-                <Button variant="outlined" className="px-12">Search</Button>
+              <form className="search-section flex items-center gap-4 mb-8">
+                <TextField 
+                  id="search-input" 
+                  label="Search projects" 
+                  variant="outlined" 
+                  placeholder="Enter keywords..." 
+                  fullWidth
+                  InputProps={{
+                    startAdornment: <Search size={20} className="text-gray-400 mr-2" />,
+                  }}
+                  className="bg-white rounded-lg shadow-md"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'green',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: 'green',
+                    },
+                  }}
+                />
+                <Button 
+                  variant="contained" 
+                  className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-md transition duration-300 ease-in-out"
+                >
+                  Search
+                </Button>
               </form>
               <div className="w-full">
                 {!data ? null : content}
