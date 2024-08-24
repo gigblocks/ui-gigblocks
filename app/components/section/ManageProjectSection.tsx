@@ -68,14 +68,14 @@ const toastText:any = {
     error: 'completing project failed'
   },
   "Completed Projects": {
+    loading: 'Approving payment...',
+    success: 'Approve payment success',
+    error: 'Approve payment failed'
+  },
+  "Approved Projects": {
     loading: 'Claiming payment...',
     success: 'Claim payment success',
     error: 'Claim payment failed'
-  },
-  "Approved Projects": {
-    loading: '',
-    success: '',
-    error: ''
   }
 }
 
