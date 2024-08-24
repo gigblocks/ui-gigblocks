@@ -97,6 +97,7 @@ export default function WalletButton({
     localStorage.removeItem('is_ens_verified');
     localStorage.removeItem('role');
     setDisplayName("");
+    window.location.href = "/";
   };
 
   const result = useReadContract({
