@@ -12,6 +12,7 @@ import { Button, TextField, OutlinedInput, InputAdornment } from '@mui/material'
 import moment from 'moment'
 import { MapPin, Calendar, Eye, MessageSquare, DollarSign, Clock, ThumbsUp, Languages, BarChart } from 'lucide-react'
 import Header1 from '@/app/components/header/Header1'
+import Image from 'next/image'
 
 // Dummy data for the project
 const dummyProjectData = {
@@ -126,34 +127,39 @@ export default function ProjectDetail() {
 
           <div className="md:w-1/3">
             <div className="bg-white shadow-lg rounded-lg p-8 sticky top-24">
-              <h2 className="text-3xl font-bold mb-2 text-gray-800">${dummyProjectData.minRate} - ${dummyProjectData.maxRate}</h2>
-              <p className="text-sm text-gray-600 mb-6">Hourly Rate</p>
+              <h2 className="text-3xl font-bold mb-2 text-gray-800">${data.jobDetails.priceRange.min} - ${data.jobDetails.priceRange.max}</h2>
+              <p className="text-sm text-gray-600 mb-6">Price Range</p>
               
-              <h3 className="text-xl font-semibold mb-4 text-gray-800">About Buyer</h3>
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">About Client</h3>
+              <div className="w-20 h-16  rounded-full flex items-start justify-center text-white">
+                <Image
+                  src={`${process.env.NEXT_PUBLIC_PINATA_GATEWAY}/ipfs/${data.jobDetails.detailClient.pictureIPFS}` || '/default-avatar.png'}
+                  alt="Client Avatar"
+                  width={80}
+                  height={80}
+                  className="rounded-full border-4 border-gray-200 "
+                />
+                </div>
               <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-4 flex items-center justify-center text-white text-xl font-bold">
-                  {dummyProjectData.buyerName.charAt(0)}
-                </div>
+                
+                
+                <div></div>
                 <div>
-                  <p className="font-semibold text-gray-800">{dummyProjectData.buyerName}</p>
-                  <p className="text-sm text-gray-600">{dummyProjectData.buyerCompany}</p>
+                  <p className="font-semibold text-gray-800">{data.jobDetails.detailClient.username}</p>
+                  <p className="text-sm text-gray-600">{data.jobDetails.detailClient.description}</p>
                 </div>
               </div>
-              <div className="flex items-center text-sm text-yellow-500 mb-6">
+              {/* <div className="flex items-center text-sm text-yellow-500 mb-6">
                 ★★★★★ <span className="text-gray-600 ml-2">4.9 (595 reviews)</span>
-              </div>
+              </div> */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="font-semibold text-gray-800">Location</p>
-                  <p className="text-gray-600">{dummyProjectData.buyerLocation}</p>
+                  <p className="text-gray-600">{data.jobDetails.detailClient.country}</p>
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800">Employees</p>
-                  <p className="text-gray-600">{dummyProjectData.buyerEmployees}</p>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800">Departments</p>
-                  <p className="text-gray-600">{dummyProjectData.buyerDepartments}</p>
+                  <p className="font-semibold text-gray-800">Preferences</p>
+                  <p className="text-gray-600">{data.jobDetails.detailClient.preference}</p>
                 </div>
               </div>
               <button 
